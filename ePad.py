@@ -87,6 +87,7 @@ class Interface(object):
         self.flip.show()
 
         self.isSaved = False
+        self.isNewFile = False
 
     def newPress( self, obj, it ):
         self.newFile()
@@ -97,7 +98,7 @@ class Interface(object):
         it.selected_set(False)
 
     def savePress( self, obj, it ):
-        if self.mainEn.file_get()[0] == None:
+        if self.mainEn.file_get()[0] == None or self.isNewFile:
             self.saveAs()
         else:
             self.saveFile()
@@ -112,7 +113,7 @@ class Interface(object):
 
     def textEdited( self, obj ):
         ourFile = self.mainEn.file_get()[0]
-        if ourFile:
+        if ourFile and not self.isNewFile:
             self.mainWindow.title_set("*%s - ePad"%ourFile)
         else:
             self.mainWindow.title_set("*Untitlted - ePad")
@@ -130,6 +131,7 @@ class Interface(object):
             self.mainEn.file_save()
             self.mainWindow.title_set("%s - ePad" % file_selected)
             self.isSaved = True
+            self.isNewFile = False
         else:
             self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
             self.mainWindow.title_set("%s - ePad" % file_selected)
@@ -160,7 +162,9 @@ class Interface(object):
         trans.duration = 0.5
         trans.go()
 
+        self.mainWindow.title_set("Untitlted - ePad")
         self.mainEn.entry_set("")
+        self.isNewFile = True
 
     def openFile( self ):
         self.fileSelector.is_save_set(False)
