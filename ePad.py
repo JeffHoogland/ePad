@@ -120,21 +120,22 @@ class Interface(object):
         self.isSaved = False
 
     def fileSelected( self, fs, file_selected ):
-        self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
+        self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
         print file_selected
         IsSave = fs.is_save_get()
-        if IsSave:
-            open(file_selected,'w').close() # creates new file
-            tmp_text = self.mainEn.entry_get()
-            self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
-            self.mainEn.entry_set(tmp_text)
-            self.mainEn.file_save()
-            self.mainWindow.title_set("%s - ePad" % file_selected)
-            self.isSaved = True
-            self.isNewFile = False
-        else:
-            self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
-            self.mainWindow.title_set("%s - ePad" % file_selected)
+        if file_selected:
+            if IsSave:
+                #open(file_selected,'w').close() # creates new file
+                tmp_text = self.mainEn.entry_get()
+                self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
+                self.mainEn.entry_set(tmp_text)
+                self.mainEn.file_save()
+                self.mainWindow.title_set("%s - ePad" % file_selected)
+                self.isSaved = True
+                self.isNewFile = False
+            else:
+                self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
+                self.mainWindow.title_set("%s - ePad" % file_selected)
 
     def aboutPress( self, obj, it ):
         #About popup
