@@ -262,10 +262,8 @@ class Interface(object):
 if __name__ == "__main__":
     elementary.init()
 
-    print sys.argv[1]
-
     GUI = Interface()
-    if sys.argv[1]:
+    if len(sys.argv) > 1:
         GUI.launch(sys.argv[1])
     else:
         GUI.launch()
