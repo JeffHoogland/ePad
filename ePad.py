@@ -99,7 +99,7 @@ class Interface(object):
         self.mainWindow.resize_object_add(self.flip)
         self.flip.show()
 
-        self.isSaved = False
+        self.isSaved = True
         self.isNewFile = False
 
     def newPress( self, obj, it ):
