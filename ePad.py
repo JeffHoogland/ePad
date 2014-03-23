@@ -122,9 +122,9 @@ class Interface(object):
         it.selected_set(False)
 
     def textEdited( self, obj ):
-        ourFile = self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
+        ourFile = self.mainEn.file_get()[0]
         if ourFile and not self.isNewFile:
-            self.mainWindow.title_set("*%s - ePad"%ourFile)
+            self.mainWindow.title_set("*%s - ePad"%self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
         else:
             self.mainWindow.title_set("*Untitlted - ePad")
         self.isSaved = False
