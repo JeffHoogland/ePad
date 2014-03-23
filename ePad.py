@@ -10,6 +10,7 @@ from efl import elementary
 from efl.elementary.window import StandardWindow
 from efl.elementary.box import Box
 from efl.elementary.button import Button
+from efl.elementary.label import Label
 from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8
 from efl.elementary.popup import Popup, ELM_WRAP_CHAR
 from efl.elementary.toolbar import Toolbar, ELM_TOOLBAR_SHRINK_MENU, \
@@ -43,8 +44,9 @@ ALIGN_CENTER = 0.5, 0.5
 
 class Interface(object):
     def __init__( self ):
-        self.mainWindow = StandardWindow("ePad", "Untitled - ePad", autodel=True, size=(600, 400))
+        self.mainWindow = StandardWindow("ePad", "Untitled - ePad", size=(600, 400))
         self.mainWindow.callback_delete_request_add(self.closeChecks)
+        #self.mainWindow.elm_event_callback_add(self.eventsCb)
 
         self.mainBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
         self.mainBox.show()
@@ -62,6 +64,7 @@ class Interface(object):
         self.mainEn.scrollable_set(True) # creates scrollbars rather than enlarge window
         self.mainEn.line_wrap_set(False) # does not allow line wrap (can be changed by user)
         self.mainEn.autosave_set(False) # set to false to reduce disk I/O
+        self.mainEn.elm_event_callback_add(self.eventsCb)
         self.mainEn.show()
         
         self.mainTb.show()
@@ -70,6 +73,13 @@ class Interface(object):
         self.mainBox.pack_end(self.mainEn)
 
         #Build our file selector for saving/loading files
+        self.fileBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
+        self.fileBox.show()
+
+        self.fileLabel = Label(self.mainWindow, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_BOTH)
+        self.fileLabel.text = ""
+        self.fileLabel.show()
+
         self.fileSelector = Fileselector(self.mainWindow, is_save=True, expandable=False, folder_only=False,
                       path=os.getenv("HOME"), size_hint_weight=EXPAND_BOTH,
                       size_hint_align=FILL_BOTH)
@@ -78,11 +88,14 @@ class Interface(object):
         #self.fileSelector.callback_directory_open_add(fs_cb_directory_open, win)
         self.fileSelector.show()
 
+        self.fileBox.pack_end(self.fileLabel)
+        self.fileBox.pack_end(self.fileSelector)
+
         # the flip object has the file selector on one side and the GUI on the other
         self.flip = Flip(self.mainWindow, size_hint_weight=EXPAND_BOTH,
                          size_hint_align=FILL_BOTH)
         self.flip.part_content_set("front", self.mainBox)
-        self.flip.part_content_set("back", self.fileSelector)
+        self.flip.part_content_set("back", self.fileBox)
         self.mainWindow.resize_object_add(self.flip)
         self.flip.show()
 
@@ -98,10 +111,7 @@ class Interface(object):
         it.selected_set(False)
 
     def savePress( self, obj, it ):
-        if self.mainEn.file_get()[0] == None or self.isNewFile:
-            self.saveAs()
-        else:
-            self.saveFile()
+        self.saveFile()
         it.selected_set(False)
 
     def saveAsPress( self, obj, it ):
@@ -169,19 +179,74 @@ class Interface(object):
 
     def openFile( self ):
         self.fileSelector.is_save_set(False)
+        self.fileLabel.text = "<b>Select a text file to open:</b>"
         self.flip.go(ELM_FLIP_ROTATE_YZ_CENTER_AXIS)
 
     def saveAs( self ):
         self.fileSelector.is_save_set(True)
+        self.fileLabel.text = "<b>Save new file to where:</b>"
         self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
 
-    def saveFile( self ):
-        self.mainEn.file_save()
-        self.mainWindow.title_set("%s - ePad"%self.mainEn.file_get()[0])
-        self.isSaved = True
+    def saveFile( self, obj=False ):
+        if self.mainEn.file_get()[0] == None or self.isNewFile:
+            self.saveAs()
+        else:
+            self.mainEn.file_save()
+            self.mainWindow.title_set("%s - ePad"%self.mainEn.file_get()[0])
+            self.isSaved = True
 
     def closeChecks( self, obj ):
+        print self.isSaved
+        if self.isSaved == False:
+            self.closePopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
+            self.closePopup.part_text_set("title,text","File Unsaved")
+            self.closePopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0]
+            # Close without saving button
+            no_btt = Button(self.mainWindow)
+            no_btt.text = "No"
+            no_btt.callback_clicked_add(self.closeApp)
+            no_btt.show()
+            # cancel close request
+            cancel_btt = Button(self.mainWindow)
+            cancel_btt.text = "Cancel"
+            cancel_btt.callback_clicked_add(self.closeClose)
+            cancel_btt.show()
+            # Save the file and then close button
+            sav_btt = Button(self.mainWindow)
+            sav_btt.text = "Yes"
+            sav_btt.callback_clicked_add(self.saveFile)
+            sav_btt.callback_clicked_add(self.closeClose)
+            sav_btt.show()
+            
+            # add buttons to popup
+            self.closePopup.part_content_set("button1", no_btt)
+            self.closePopup.part_content_set("button2", cancel_btt)
+            self.closePopup.part_content_set("button3", sav_btt)
+            self.closePopup.show()
+        else:
+            self.closeApp()
+
+    def closeClose( self, bt=False ):
+        self.closePopup.delete()
+
+    def closeApp( self, obj=False ):
         elementary.exit()
+
+    def eventsCb( self, obj, src, event_type, event ):
+        print event_type
+        print event.key
+        print "Control Key Status: %s" %event.modifier_is_set("Control")
+        print "Shift Key Status: %s" %event.modifier_is_set("Shift")
+        #print event.modifier_is_set("Alt")
+        if event_type == 11 and event.modifier_is_set("Control"):
+            if event.key == "n":
+                self.newFile()
+            elif event.key == "s" and event.modifier_is_set("Shift"):
+                self.saveAs()
+            elif event.key == "s":
+                self.saveFile()
+            elif event.key == "o":
+                self.openFile()
 
     def launch( self ):
         self.mainWindow.show()
