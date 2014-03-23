@@ -46,7 +46,7 @@ class Interface(object):
     def __init__( self ):
         self.mainWindow = StandardWindow("ePad", "Untitled - ePad", size=(600, 400))
         self.mainWindow.callback_delete_request_add(self.closeChecks)
-        #self.mainWindow.elm_event_callback_add(self.eventsCb)
+        self.mainWindow.elm_event_callback_add(self.eventsCb)
 
         self.mainBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
         self.mainBox.show()
@@ -80,7 +80,7 @@ class Interface(object):
         self.fileLabel.text = ""
         self.fileLabel.show()
 
-        self.fileSelector = Fileselector(self.mainWindow, is_save=True, expandable=False, folder_only=False,
+        self.fileSelector = Fileselector(self.mainWindow, is_save=False, expandable=False, folder_only=False,
                       path=os.getenv("HOME"), size_hint_weight=EXPAND_BOTH,
                       size_hint_align=FILL_BOTH)
         self.fileSelector.callback_done_add(self.fileSelected)
@@ -122,30 +122,33 @@ class Interface(object):
         it.selected_set(False)
 
     def textEdited( self, obj ):
-        ourFile = self.mainEn.file_get()[0]
+        ourFile = self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
         if ourFile and not self.isNewFile:
             self.mainWindow.title_set("*%s - ePad"%ourFile)
         else:
             self.mainWindow.title_set("*Untitlted - ePad")
         self.isSaved = False
 
-    def fileSelected( self, fs, file_selected ):
-        self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
+    def fileSelected( self, fs, file_selected, onStartup=False ):
+        if not onStartup:
+            self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
         print file_selected
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
-                #open(file_selected,'w').close() # creates new file
+                newfile = open(file_selected,'w') # creates new file
                 tmp_text = self.mainEn.entry_get()
+                newfile.write(tmp_text)
+                newfile.close()
                 self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
                 self.mainEn.entry_set(tmp_text)
                 self.mainEn.file_save()
-                self.mainWindow.title_set("%s - ePad" % file_selected)
+                self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
                 self.isSaved = True
                 self.isNewFile = False
             else:
                 self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
-                self.mainWindow.title_set("%s - ePad" % file_selected)
+                self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
 
     def aboutPress( self, obj, it ):
         #About popup
@@ -192,7 +195,7 @@ class Interface(object):
             self.saveAs()
         else:
             self.mainEn.file_save()
-            self.mainWindow.title_set("%s - ePad"%self.mainEn.file_get()[0])
+            self.mainWindow.title_set("%s - ePad"%self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
             self.isSaved = True
 
     def closeChecks( self, obj ):
@@ -200,7 +203,10 @@ class Interface(object):
         if self.isSaved == False:
             self.closePopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
             self.closePopup.part_text_set("title,text","File Unsaved")
-            self.closePopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0]
+            if self.mainEn.file_get()[0]:
+                self.closePopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
+            else:
+                self.closePopup.text = "Save changes to 'Untitlted'?"
             # Close without saving button
             no_btt = Button(self.mainWindow)
             no_btt.text = "No"
@@ -248,14 +254,21 @@ class Interface(object):
             elif event.key == "o":
                 self.openFile()
 
-    def launch( self ):
+    def launch( self, startingFile=False ):
+        if startingFile:
+            self.fileSelected(self.fileSelector, startingFile, True)
         self.mainWindow.show()
 
 if __name__ == "__main__":
     elementary.init()
 
+    print sys.argv[1]
+
     GUI = Interface()
-    GUI.launch()
+    if sys.argv[1]:
+        GUI.launch(sys.argv[1])
+    else:
+        GUI.launch()
 
     elementary.run()
     elementary.shutdown()
