@@ -6,6 +6,7 @@
 import sys
 import os
 from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+from efl.elementary.object import EVAS_CALLBACK_KEY_UP, EVAS_CALLBACK_KEY_DOWN
 from efl import elementary
 from efl.elementary.window import StandardWindow
 from efl.elementary.box import Box
@@ -164,21 +165,52 @@ class Interface(object):
     def aboutClose( self, bt ):
         self.popupAbout.delete()
 
-    def newFile( self ):
-        trans = Transit()
-        trans.object_add(self.mainEn)
-        trans.auto_reverse = True
+    def newFile( self , obj=None, ignoreSave=False):
+        if self.isSaved == True or ignoreSave == True:
+            trans = Transit()
+            trans.object_add(self.mainEn)
+            trans.auto_reverse = True
 
-        trans.effect_wipe_add(
-            ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE,
-            ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT)
+            trans.effect_wipe_add(
+                ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE,
+                ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT)
 
-        trans.duration = 0.5
-        trans.go()
+            trans.duration = 0.5
+            trans.go()
 
-        self.mainWindow.title_set("Untitlted - ePad")
-        self.mainEn.entry_set("")
-        self.isNewFile = True
+            self.mainWindow.title_set("Untitlted - ePad")
+            self.mainEn.entry_set("")
+            self.isNewFile = True
+        else:
+            self.closePopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
+            self.closePopup.part_text_set("title,text","File Unsaved")
+            if self.mainEn.file_get()[0]:
+                self.closePopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
+            else:
+                self.closePopup.text = "Save changes to 'Untitlted'?"
+            # Close without saving button
+            no_btt = Button(self.mainWindow)
+            no_btt.text = "No"
+            no_btt.callback_clicked_add(self.closeClose)
+            no_btt.callback_clicked_add(self.newFile, True)
+            no_btt.show()
+            # cancel close request
+            cancel_btt = Button(self.mainWindow)
+            cancel_btt.text = "Cancel"
+            cancel_btt.callback_clicked_add(self.closeClose)
+            cancel_btt.show()
+            # Save the file and then close button
+            sav_btt = Button(self.mainWindow)
+            sav_btt.text = "Yes"
+            sav_btt.callback_clicked_add(self.saveFile)
+            sav_btt.callback_clicked_add(self.closeClose)
+            sav_btt.show()
+            
+            # add buttons to popup
+            self.closePopup.part_content_set("button1", no_btt)
+            self.closePopup.part_content_set("button2", cancel_btt)
+            self.closePopup.part_content_set("button3", sav_btt)
+            self.closePopup.show()
 
     def openFile( self ):
         self.fileSelector.is_save_set(False)
@@ -239,10 +271,10 @@ class Interface(object):
         elementary.exit()
 
     def eventsCb( self, obj, src, event_type, event ):
-        print event_type
-        print event.key
-        print "Control Key Status: %s" %event.modifier_is_set("Control")
-        print "Shift Key Status: %s" %event.modifier_is_set("Shift")
+        #print event_type
+        #print event.key
+        #print "Control Key Status: %s" %event.modifier_is_set("Control")
+        #print "Shift Key Status: %s" %event.modifier_is_set("Shift")
         #print event.modifier_is_set("Alt")
         if event_type == 11 and event.modifier_is_set("Control"):
             if event.key == "n":
@@ -264,7 +296,12 @@ if __name__ == "__main__":
 
     GUI = Interface()
     if len(sys.argv) > 1:
-        GUI.launch(sys.argv[1])
+        ourFile = str(sys.argv[1])
+        if ourFile[0:7] == "file://":
+            print ourFile
+            ourFile = ourFile[7:len(ourFile)]
+        print ourFile
+        GUI.launch(ourFile)
     else:
         GUI.launch()
 
