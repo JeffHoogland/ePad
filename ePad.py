@@ -5,6 +5,7 @@
 
 import sys
 import os
+import time
 from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
 from efl.elementary.object import EVAS_CALLBACK_KEY_UP, EVAS_CALLBACK_KEY_DOWN
 from efl import elementary
@@ -178,9 +179,21 @@ class Interface(object):
 
             trans.duration = 0.5
             trans.go()
+            
+            time.sleep(0.5)
 
             self.mainWindow.title_set("Untitlted - ePad")
-            self.mainEn.entry_set("")
+            self.mainEn.delete()
+            self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
+            self.mainEn.callback_changed_user_add(self.textEdited)
+            self.mainEn.scrollable_set(True) # creates scrollbars rather than enlarge window
+            self.mainEn.line_wrap_set(False) # does not allow line wrap (can be changed by user)
+            self.mainEn.autosave_set(False) # set to false to reduce disk I/O
+            self.mainEn.elm_event_callback_add(self.eventsCb)
+            self.mainEn.show()
+            
+            self.mainBox.pack_end(self.mainEn)
+
             self.isNewFile = True
         elif self.confirmPopup == None:
             self.confirmSave(self.newFile)
