@@ -102,6 +102,7 @@ class Interface(object):
 
         self.isSaved = True
         self.isNewFile = False
+        self.confirmPopup = None
 
     def newPress( self, obj, it ):
         self.newFile()
@@ -165,7 +166,7 @@ class Interface(object):
     def aboutClose( self, bt ):
         self.popupAbout.delete()
 
-    def newFile( self , obj=None, ignoreSave=False):
+    def newFile( self , obj=None, ignoreSave=False ):
         if self.isSaved == True or ignoreSave == True:
             trans = Transit()
             trans.object_add(self.mainEn)
@@ -181,41 +182,48 @@ class Interface(object):
             self.mainWindow.title_set("Untitlted - ePad")
             self.mainEn.entry_set("")
             self.isNewFile = True
-        else:
-            self.closePopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
-            self.closePopup.part_text_set("title,text","File Unsaved")
-            if self.mainEn.file_get()[0]:
-                self.closePopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
-            else:
-                self.closePopup.text = "Save changes to 'Untitlted'?"
-            # Close without saving button
-            no_btt = Button(self.mainWindow)
-            no_btt.text = "No"
-            no_btt.callback_clicked_add(self.closeClose)
-            no_btt.callback_clicked_add(self.newFile, True)
-            no_btt.show()
-            # cancel close request
-            cancel_btt = Button(self.mainWindow)
-            cancel_btt.text = "Cancel"
-            cancel_btt.callback_clicked_add(self.closeClose)
-            cancel_btt.show()
-            # Save the file and then close button
-            sav_btt = Button(self.mainWindow)
-            sav_btt.text = "Yes"
-            sav_btt.callback_clicked_add(self.saveFile)
-            sav_btt.callback_clicked_add(self.closeClose)
-            sav_btt.show()
-            
-            # add buttons to popup
-            self.closePopup.part_content_set("button1", no_btt)
-            self.closePopup.part_content_set("button2", cancel_btt)
-            self.closePopup.part_content_set("button3", sav_btt)
-            self.closePopup.show()
+        elif self.confirmPopup == None:
+            self.confirmSave(self.newFile)
 
-    def openFile( self ):
-        self.fileSelector.is_save_set(False)
-        self.fileLabel.text = "<b>Select a text file to open:</b>"
-        self.flip.go(ELM_FLIP_ROTATE_YZ_CENTER_AXIS)
+    def openFile( self, obj=None, ignoreSave=False ):
+        if self.isSaved == True or ignoreSave == True:
+            self.fileSelector.is_save_set(False)
+            self.fileLabel.text = "<b>Select a text file to open:</b>"
+            self.flip.go(ELM_FLIP_ROTATE_YZ_CENTER_AXIS)
+        elif self.confirmPopup == None:
+            self.confirmSave(self.openFile)
+
+    def confirmSave( self, ourCallback=None ):
+        self.confirmPopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
+        self.confirmPopup.part_text_set("title,text","File Unsaved")
+        if self.mainEn.file_get()[0]:
+            self.confirmPopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
+        else:
+            self.confirmPopup.text = "Save changes to 'Untitlted'?"
+        # Close without saving button
+        no_btt = Button(self.mainWindow)
+        no_btt.text = "No"
+        no_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
+        if ourCallback is not None:
+            no_btt.callback_clicked_add(ourCallback, True)
+        no_btt.show()
+        # cancel close request
+        cancel_btt = Button(self.mainWindow)
+        cancel_btt.text = "Cancel"
+        cancel_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
+        cancel_btt.show()
+        # Save the file and then close button
+        sav_btt = Button(self.mainWindow)
+        sav_btt.text = "Yes"
+        sav_btt.callback_clicked_add(self.saveFile)
+        sav_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
+        sav_btt.show()
+        
+        # add buttons to popup
+        self.confirmPopup.part_content_set("button1", no_btt)
+        self.confirmPopup.part_content_set("button2", cancel_btt)
+        self.confirmPopup.part_content_set("button3", sav_btt)
+        self.confirmPopup.show()
 
     def saveAs( self ):
         self.fileSelector.is_save_set(True)
@@ -232,42 +240,16 @@ class Interface(object):
 
     def closeChecks( self, obj ):
         print self.isSaved
-        if self.isSaved == False:
-            self.closePopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
-            self.closePopup.part_text_set("title,text","File Unsaved")
-            if self.mainEn.file_get()[0]:
-                self.closePopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
-            else:
-                self.closePopup.text = "Save changes to 'Untitlted'?"
-            # Close without saving button
-            no_btt = Button(self.mainWindow)
-            no_btt.text = "No"
-            no_btt.callback_clicked_add(self.closeApp)
-            no_btt.show()
-            # cancel close request
-            cancel_btt = Button(self.mainWindow)
-            cancel_btt.text = "Cancel"
-            cancel_btt.callback_clicked_add(self.closeClose)
-            cancel_btt.show()
-            # Save the file and then close button
-            sav_btt = Button(self.mainWindow)
-            sav_btt.text = "Yes"
-            sav_btt.callback_clicked_add(self.saveFile)
-            sav_btt.callback_clicked_add(self.closeClose)
-            sav_btt.show()
-            
-            # add buttons to popup
-            self.closePopup.part_content_set("button1", no_btt)
-            self.closePopup.part_content_set("button2", cancel_btt)
-            self.closePopup.part_content_set("button3", sav_btt)
-            self.closePopup.show()
+        if self.isSaved == False and self.confirmPopup == None:
+            self.confirmSave(self.closeApp)
         else:
             self.closeApp()
 
-    def closeClose( self, bt=False ):
-        self.closePopup.delete()
+    def closePopup( self, bt, confirmPopup ):
+        self.confirmPopup.delete()
+        self.confirmPopup = None
 
-    def closeApp( self, obj=False ):
+    def closeApp( self, obj=False, trash=False ):
         elementary.exit()
 
     def eventsCb( self, obj, src, event_type, event ):
