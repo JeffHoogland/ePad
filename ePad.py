@@ -62,6 +62,7 @@ class Interface(object):
         self.mainEn.line_wrap_set(False) # does not allow line wrap (can be changed by user)
         self.mainEn.autosave_set(False) # set to false to reduce disk I/O
         self.mainEn.elm_event_callback_add(self.eventsCb)
+        self.mainEn.markup_filter_append(self.textFilter)
         self.mainEn.show()
         
         self.mainTb.show()
@@ -266,15 +267,24 @@ class Interface(object):
         #print "Control Key Status: %s" %event.modifier_is_set("Control")
         #print "Shift Key Status: %s" %event.modifier_is_set("Shift")
         #print event.modifier_is_set("Alt")
-        if event_type == 11 and event.modifier_is_set("Control"):
-            if event.key == "n":
+        if event.modifier_is_set("Control"):
+            if event.key.lower() == "n":
                 self.newFile()
-            elif event.key == "s" and event.modifier_is_set("Shift"):
+            elif event.key.lower() == "s" and event.modifier_is_set("Shift"):
                 self.saveAs()
-            elif event.key == "s":
+            elif event.key.lower() == "s":
                 self.saveFile()
-            elif event.key == "o":
+            elif event.key.lower() == "o":
                 self.openFile()
+
+    def textFilter( self, obj, theText, data ):
+        #print theText
+
+        #Block ctrl+hot keys
+        if theText == "" or theText == "" or theText == "":
+            return None
+        else:
+            return theText
 
     def launch( self, startingFile=False ):
         if startingFile:
