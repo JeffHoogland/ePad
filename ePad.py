@@ -13,6 +13,7 @@ from efl.elementary.window import StandardWindow
 from efl.elementary.box import Box
 from efl.elementary.button import Button
 from efl.elementary.label import Label
+from efl.elementary.icon import Icon
 from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8
 from efl.elementary.popup import Popup, ELM_WRAP_CHAR
 from efl.elementary.toolbar import Toolbar, ELM_TOOLBAR_SHRINK_MENU, \
@@ -44,6 +45,13 @@ class Interface(object):
         self.mainWindow = StandardWindow("ePad", "Untitled - ePad", size=(600, 400))
         self.mainWindow.callback_delete_request_add(self.closeChecks)
         self.mainWindow.elm_event_callback_add(self.eventsCb)
+
+        icon = Icon(self.mainWindow)
+        icon.size_hint_weight_set(EVAS_HINT_EXPAND, EVAS_HINT_EXPAND)
+        icon.size_hint_align_set(EVAS_HINT_FILL, EVAS_HINT_FILL)
+        icon.standard_set('accessories-text-editor') # assumes image icon is in local dir, may need to change later
+        icon.show()
+        self.mainWindow.icon_object_set(icon.object_get())
 
         self.mainBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
         self.mainBox.show()
