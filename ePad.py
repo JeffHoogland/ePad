@@ -194,6 +194,7 @@ class Interface(object):
             self.mainEn.line_wrap_set(False) # does not allow line wrap (can be changed by user)
             self.mainEn.autosave_set(False) # set to false to reduce disk I/O
             self.mainEn.elm_event_callback_add(self.eventsCb)
+            self.mainEn.markup_filter_append(self.textFilter)
             self.mainEn.show()
             
             self.mainBox.pack_end(self.mainEn)
