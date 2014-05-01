@@ -42,7 +42,7 @@ ALIGN_CENTER = 0.5, 0.5
 
 class Interface(object):
     def __init__( self ):
-        self.mainWindow = StandardWindow("ePad", "Untitled - ePad", size=(600, 400))
+        self.mainWindow = StandardWindow("epad", "Untitled - ePad", size=(600, 400))
         self.mainWindow.callback_delete_request_add(self.closeChecks)
         self.mainWindow.elm_event_callback_add(self.eventsCb)
 
