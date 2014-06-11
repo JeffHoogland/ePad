@@ -139,7 +139,7 @@ class Interface(object):
     def fileSelected( self, fs, file_selected, onStartup=False ):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
-        print file_selected
+        print(file_selected)
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
@@ -257,7 +257,7 @@ class Interface(object):
             self.isSaved = True
 
     def closeChecks( self, obj ):
-        print self.isSaved
+        print(self.isSaved)
         if self.isSaved == False and self.confirmPopup == None:
             self.confirmSave(self.closeApp)
         else:
@@ -307,9 +307,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         ourFile = str(sys.argv[1])
         if ourFile[0:7] == "file://":
-            print ourFile
+            print(ourFile)
             ourFile = ourFile[7:len(ourFile)]
-        print ourFile
+        print(ourFile)
         GUI.launch(ourFile)
     else:
         GUI.launch()
