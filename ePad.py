@@ -154,7 +154,10 @@ class Interface(object):
                 self.isSaved = True
                 self.isNewFile = False
             else:
-                self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
+                try:
+                    self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
+                except RuntimeError:
+                    print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
 
     def aboutPress( self, obj, it ):
