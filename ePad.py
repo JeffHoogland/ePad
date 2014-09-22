@@ -1,5 +1,5 @@
 #ePad - a simple text editor written in Elementary and Python
-#
+# 
 #By: Jeff Hoogland
 #Started On: 03/16/2014
 
@@ -61,7 +61,11 @@ class Interface(object):
         self.mainTb.item_append("document-open", "Open", self.openPress)
         self.mainTb.item_append("document-save", "Save", self.savePress)
         self.mainTb.item_append("document-save-as", "Save As", self.saveAsPress)
-        #self.mainTb.item_append("settings", "Options", self.optionsPress)
+        self.mainTb.item_append("edit-copy", "Copy", self.copyPress)
+        self.mainTb.item_append("edit-copy", "Paste", self.pastePress)
+        self.mainTb.item_append("edit-cut", "Cut", self.cutPress)
+        self.mainTb.item_append("edit-select-all", "Select All", self.selectAllPress)
+        # self.mainTb.item_append("settings", "Options", self.optionsPress)
         self.mainTb.item_append("dialog-information", "About", self.aboutPress)
 
         self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
@@ -128,6 +132,18 @@ class Interface(object):
     def optionsPress( self, obj, it ):
         it.selected_set(False)
 
+    def copyPress( self, obj, it ):
+        self.mainEn.selection_copy()
+
+    def pastePress( self, obj, it ):
+        self.mainEn.selection_paste()
+
+    def cutPress( self, obj, it ):
+        self.mainEn.selection_cut()
+
+    def selectAllPress( self, obj, it ):
+        self.mainEn.select_all()
+
     def textEdited( self, obj ):
         ourFile = self.mainEn.file_get()[0]
         if ourFile and not self.isNewFile:
@@ -139,7 +155,7 @@ class Interface(object):
     def fileSelected( self, fs, file_selected, onStartup=False ):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
-        print(file_selected)
+        print file_selected
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
@@ -154,10 +170,7 @@ class Interface(object):
                 self.isSaved = True
                 self.isNewFile = False
             else:
-                try:
-                    self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
-                except RuntimeError:
-                    print("Empty file: {0}".format(file_selected))
+                self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
                 self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
 
     def aboutPress( self, obj, it ):
@@ -260,7 +273,7 @@ class Interface(object):
             self.isSaved = True
 
     def closeChecks( self, obj ):
-        print(self.isSaved)
+        print self.isSaved
         if self.isSaved == False and self.confirmPopup == None:
             self.confirmSave(self.closeApp)
         else:
@@ -310,9 +323,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         ourFile = str(sys.argv[1])
         if ourFile[0:7] == "file://":
-            print(ourFile)
+            print ourFile
             ourFile = ourFile[7:len(ourFile)]
-        print(ourFile)
+        print ourFile
         GUI.launch(ourFile)
     else:
         GUI.launch()
