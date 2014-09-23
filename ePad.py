@@ -57,17 +57,25 @@ class Interface(object):
         self.mainBox.show()
 
         self.mainTb = Toolbar(self.mainWindow, homogeneous=False, size_hint_weight=(0.0, 0.0), size_hint_align=(EVAS_HINT_FILL, 0.0))
+        self.mainTb.menu_parent =  self.mainWindow
+
         self.mainTb.item_append("document-new", "New", self.newPress)
         self.mainTb.item_append("document-open", "Open", self.openPress)
         self.mainTb.item_append("document-save", "Save", self.savePress)
         self.mainTb.item_append("document-save-as", "Save As", self.saveAsPress)
-        self.mainTb.item_append("edit-copy", "Copy", self.copyPress)
-        self.mainTb.item_append("edit-copy", "Paste", self.pastePress)
-        self.mainTb.item_append("edit-cut", "Cut", self.cutPress)
-        self.mainTb.item_append("edit-select-all", "Select All", self.selectAllPress)
+        # -- Edit Dropdown Menu --
+        tb_it = self.mainTb.item_append("edit", "Edit")
+        tb_it.menu = True
+        menu = tb_it.menu
+        menu.item_add(None, "Copy", "edit-copy", self.copyPress)
+        menu.item_add(None, "Paste", "edit-paste", self.pastePress)
+        menu.item_add(None, "Cut", "edit-cut", self.cutPress)
+        menu.item_separator_add()
+        menu.item_add(None, "Select All", "edit-select-all", self.selectAllPress)
+        # -----------------------
         # self.mainTb.item_append("settings", "Options", self.optionsPress)
         self.mainTb.item_append("dialog-information", "About", self.aboutPress)
-
+        
         self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.scrollable_set(True) # creates scrollbars rather than enlarge window
