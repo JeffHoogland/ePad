@@ -1,5 +1,5 @@
 #ePad - a simple text editor written in Elementary and Python
-#
+# 
 #By: Jeff Hoogland
 #Started On: 03/16/2014
 
@@ -61,7 +61,11 @@ class Interface(object):
         self.mainTb.item_append("document-open", "Open", self.openPress)
         self.mainTb.item_append("document-save", "Save", self.savePress)
         self.mainTb.item_append("document-save-as", "Save As", self.saveAsPress)
-        #self.mainTb.item_append("settings", "Options", self.optionsPress)
+        self.mainTb.item_append("edit-copy", "Copy", self.copyPress)
+        self.mainTb.item_append("edit-copy", "Paste", self.pastePress)
+        self.mainTb.item_append("edit-cut", "Cut", self.cutPress)
+        self.mainTb.item_append("edit-select-all", "Select All", self.selectAllPress)
+        # self.mainTb.item_append("settings", "Options", self.optionsPress)
         self.mainTb.item_append("dialog-information", "About", self.aboutPress)
 
         self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
@@ -126,6 +130,22 @@ class Interface(object):
         it.selected_set(False)
 
     def optionsPress( self, obj, it ):
+        it.selected_set(False)
+
+    def copyPress( self, obj, it ):
+        self.mainEn.selection_copy()
+        it.selected_set(False)
+
+    def pastePress( self, obj, it ):
+        self.mainEn.selection_paste()
+        it.selected_set(False)
+
+    def cutPress( self, obj, it ):
+        self.mainEn.selection_cut()
+        it.selected_set(False)
+
+    def selectAllPress( self, obj, it ):
+        self.mainEn.select_all()
         it.selected_set(False)
 
     def textEdited( self, obj ):
