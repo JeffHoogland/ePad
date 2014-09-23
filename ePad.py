@@ -134,15 +134,19 @@ class Interface(object):
 
     def copyPress( self, obj, it ):
         self.mainEn.selection_copy()
+        it.selected_set(False)
 
     def pastePress( self, obj, it ):
         self.mainEn.selection_paste()
+        it.selected_set(False)
 
     def cutPress( self, obj, it ):
         self.mainEn.selection_cut()
+        it.selected_set(False)
 
     def selectAllPress( self, obj, it ):
         self.mainEn.select_all()
+        it.selected_set(False)
 
     def textEdited( self, obj ):
         ourFile = self.mainEn.file_get()[0]
