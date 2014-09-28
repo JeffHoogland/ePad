@@ -1,5 +1,5 @@
 #ePad - a simple text editor written in Elementary and Python
-# 
+#
 #By: Jeff Hoogland
 #Started On: 03/16/2014
 
@@ -39,6 +39,7 @@ EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
 FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
 FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
+WORD_WRAP = False
 
 class Interface(object):
     def __init__( self ):
@@ -73,22 +74,31 @@ class Interface(object):
         menu.item_separator_add()
         menu.item_add(None, "Select All", "edit-select-all", self.selectAllPress)
         # -----------------------
+        #
+        # -- Options Dropdown Menu --
+        #
         # self.mainTb.item_append("settings", "Options", self.optionsPress)
-        self.mainTb.item_append("dialog-information", "About", self.aboutPress)
-        
-        self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
-        self.mainEn.callback_changed_user_add(self.textEdited)
-        self.mainEn.scrollable_set(True) # creates scrollbars rather than enlarge window
-        self.mainEn.line_wrap_set(False) # does not allow line wrap (can be changed by user)
-        self.mainEn.autosave_set(False) # set to false to reduce disk I/O
-        self.mainEn.elm_event_callback_add(self.eventsCb)
-        self.mainEn.markup_filter_append(self.textFilter)
-        self.mainEn.show()
-        
-        self.mainTb.show()
+        tb_it = self.mainTb.item_append("preferences-desktop", "Options")
+        tb_it.menu = True
+        menu = tb_it.menu
+        # Should be a way to have check list menu items
+        self.wordwrap = WORD_WRAP
+        if self.wordwrap:
+            str = u"\u2713"+"Word Wrap" # Unicode for check mark
+        else:
+            str ="  Wordwrap"
+        menu.item_add(None, str , None, self.optionsPress)
+        # ---------------------------
 
+        self.mainTb.item_append("dialog-information", "About", self.aboutPress)
+
+        self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
-        self.mainBox.pack_end(self.mainEn)
+
+        #Initialize Text entry box
+
+        print("Word wrap Initialized: {0}".format(self.wordwrap))
+        self.entryInit()
 
         #Build our file selector for saving/loading files
         self.fileBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
@@ -120,6 +130,17 @@ class Interface(object):
         self.isSaved = True
         self.isNewFile = False
         self.confirmPopup = None
+
+    def entryInit(self):
+        self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
+        self.mainEn.callback_changed_user_add(self.textEdited)
+        self.mainEn.scrollable_set(True) # creates scrollbars rather than enlarge window
+        self.mainEn.line_wrap_set(self.wordwrap)
+        self.mainEn.autosave_set(False) # set to false to reduce disk I/O
+        self.mainEn.elm_event_callback_add(self.eventsCb)
+        self.mainEn.markup_filter_append(self.textFilter)
+        self.mainEn.show()
+        self.mainBox.pack_end(self.mainEn)
 
     def newPress( self, obj, it ):
         self.newFile()
@@ -159,7 +180,7 @@ class Interface(object):
     def textEdited( self, obj ):
         ourFile = self.mainEn.file_get()[0]
         if ourFile and not self.isNewFile:
-            self.mainWindow.title_set("*%s - ePad"%self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
+            self.mainWindow.title_set("*%s - ePad" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
         else:
             self.mainWindow.title_set("*Untitlted - ePad")
         self.isSaved = False
@@ -188,6 +209,18 @@ class Interface(object):
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
 
+    def optionsPress( self, obj, it ):
+        it.delete()
+        self.wordwrap = not self.wordwrap
+        self.mainEn.line_wrap_set(self.wordwrap)
+        print("Word wrap: {0}".format(self.wordwrap))
+        if self.wordwrap:
+            str = u"\u2713"+"Word Wrap"
+        else:
+            str =" Wordwrap"
+        obj.item_add(None, str, None, self.optionsPress)
+        it.selected_set(False)
+
     def aboutPress( self, obj, it ):
         #About popup
         self.popupAbout = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
@@ -214,22 +247,12 @@ class Interface(object):
 
             trans.duration = 0.5
             trans.go()
-            
+
             time.sleep(0.5)
 
             self.mainWindow.title_set("Untitlted - ePad")
             self.mainEn.delete()
-            self.mainEn = Entry(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
-            self.mainEn.callback_changed_user_add(self.textEdited)
-            self.mainEn.scrollable_set(True) # creates scrollbars rather than enlarge window
-            self.mainEn.line_wrap_set(False) # does not allow line wrap (can be changed by user)
-            self.mainEn.autosave_set(False) # set to false to reduce disk I/O
-            self.mainEn.elm_event_callback_add(self.eventsCb)
-            self.mainEn.markup_filter_append(self.textFilter)
-            self.mainEn.show()
-            
-            self.mainBox.pack_end(self.mainEn)
-
+            self.entryInit()
             self.isNewFile = True
         elif self.confirmPopup == None:
             self.confirmSave(self.newFile)
@@ -267,7 +290,7 @@ class Interface(object):
         sav_btt.callback_clicked_add(self.saveFile)
         sav_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
         sav_btt.show()
-        
+
         # add buttons to popup
         self.confirmPopup.part_content_set("button1", no_btt)
         self.confirmPopup.part_content_set("button2", cancel_btt)
@@ -318,8 +341,6 @@ class Interface(object):
                 self.openFile()
 
     def textFilter( self, obj, theText, data ):
-        #print theText
-
         #Block ctrl+hot keys
         if theText == "" or theText == "" or theText == "":
             return None
