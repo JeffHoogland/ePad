@@ -40,6 +40,7 @@ FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
 FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
 WORD_WRAP = False
+SHOW_POS = True
 
 class Interface(object):
     def __init__( self ):
@@ -100,6 +101,16 @@ class Interface(object):
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
 
+        # Add label to show current cursor position
+        if SHOW_POS:
+            self.line_label = Label(self.mainWindow)
+            self.curChanged(self.mainEn, self.line_label);
+            self.line_label.size_hint_weight_set(EVAS_HINT_EXPAND, 0)
+            self.line_label.size_hint_align_set(1, 0.5)
+            self.line_label.show()
+            self.mainBox.pack_end( self.line_label)
+            self.mainEn.callback_cursor_changed_add(self.curChanged, self.line_label)
+
         #Build our file selector for saving/loading files
         self.fileBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
         self.fileBox.show()
@@ -141,6 +152,17 @@ class Interface(object):
         self.mainEn.markup_filter_append(self.textFilter)
         self.mainEn.show()
         self.mainBox.pack_end(self.mainEn)
+
+    def curChanged(self, entry, label):
+        # get linear index into current text
+        index = entry.cursor_pos_get()
+        # Replace <br /> tag with single char
+        #   to simplify (line, col) calculation
+        a = entry.entry_get().replace("<br/>","\n")
+        line = a[:index].count("\n") + 1
+        col= len( a[:index].split("\n")[-1]) + 1
+        # Update label text with line, col
+        label.text = "Ln {0} Col {1} ".format(line, col)
 
     def newPress( self, obj, it ):
         self.newFile()
