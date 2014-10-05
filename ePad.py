@@ -33,6 +33,9 @@ from efl.elementary.transit import Transit, ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, \
     ELM_TRANSIT_EFFECT_FLIP_AXIS_Y, ELM_TRANSIT_TWEEN_MODE_ACCELERATE, \
     ELM_TRANSIT_TWEEN_MODE_DECELERATE, TransitCustomEffect
 
+# Imported here to stop class resolver complaining when an input event applies
+# to an internal layout object
+from efl.elementary.layout import Layout
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
