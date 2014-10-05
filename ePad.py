@@ -203,11 +203,9 @@ class Interface(object):
         it.selected_set(False)
 
     def textEdited( self, obj ):
-        ourFile = self.mainEn.file_get()[0]
-        if ourFile and not self.isNewFile:
-            self.mainWindow.title_set("*%s - ePad" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
-        else:
-            self.mainWindow.title_set("*Untitled - ePad")
+        current_file = self.mainEn.file[0]
+        current_file = os.path.basename(current_file) if current_file and not self.isNewFile else "Untitled"
+        self.mainWindow.title = "*%s - ePad" % (current_file)
         self.isSaved = False
 
     def fileSelected( self, fs, file_selected, onStartup=False ):
@@ -224,7 +222,7 @@ class Interface(object):
                 self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
                 self.mainEn.entry_set(tmp_text)
                 self.mainEn.file_save()
-                self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
+                self.mainWindow.title_set("%s - ePad" % os.path.basename(file_selected))
                 self.isSaved = True
                 self.isNewFile = False
             else:
@@ -232,7 +230,7 @@ class Interface(object):
                     self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
                 except RuntimeError:
                     print("Empty file: {0}".format(file_selected))
-                self.mainWindow.title_set("%s - ePad" % file_selected.split("/")[len(file_selected.split("/"))-1])
+                self.mainWindow.title_set("%s - ePad" % os.path.basename(file_selected))
 
     def optionsPress( self, obj, it ):
         it.delete()
@@ -293,10 +291,9 @@ class Interface(object):
     def confirmSave( self, ourCallback=None ):
         self.confirmPopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
         self.confirmPopup.part_text_set("title,text","File Unsaved")
-        if self.mainEn.file_get()[0]:
-            self.confirmPopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
-        else:
-            self.confirmPopup.text = "Save changes to 'Untitled'?"
+        current_file = self.mainEn.file[0]
+        current_file = os.path.basename(current_file) if current_file else "Untitled"
+        self.confirmPopup.text = "Save changes to '%s'?" % (current_file)
         # Close without saving button
         no_btt = Button(self.mainWindow)
         no_btt.text = "No"
@@ -332,7 +329,7 @@ class Interface(object):
             self.saveAs()
         else:
             self.mainEn.file_save()
-            self.mainWindow.title_set("%s - ePad"%self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
+            self.mainWindow.title_set("%s - ePad" % os.path.basename(self.mainEn.file[0]))
             self.isSaved = True
 
     def closeChecks( self, obj ):
