@@ -32,6 +32,7 @@ from efl.elementary.transit import Transit, ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, \
     ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT, ELM_TRANSIT_EFFECT_FLIP_AXIS_X, \
     ELM_TRANSIT_EFFECT_FLIP_AXIS_Y, ELM_TRANSIT_TWEEN_MODE_ACCELERATE, \
     ELM_TRANSIT_TWEEN_MODE_DECELERATE, TransitCustomEffect
+from efl.elementary.check import Check
 
 # Imported here to stop class resolver complaining when an input event applies
 # to an internal layout object
@@ -337,11 +338,10 @@ class ePadToolbar(Toolbar):
         menu = tb_it.menu
         # Should be a way to have check list menu items
         self._parent.wordwrap = WORD_WRAP
-        if self._parent.wordwrap:
-            str = u"\u2713" + "Word Wrap"  # Unicode for check mark
-        else:
-            str = "  Wordwrap"
-        menu.item_add(None, str, None, self.optionsPress)
+        it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
+        chk = Check(canvas, disabled=True)
+        it.content = chk
+
         # ---------------------------
 
         self.item_append("dialog-information", "About", self.aboutPress)
@@ -358,17 +358,13 @@ class ePadToolbar(Toolbar):
     def saveAsPress(self, obj, it):
         self._parent.saveAs()
 
-    def optionsPress(self, obj, it):
-        it.delete()
-        self._parent.wordwrap = not self._parent.wordwrap
-        self._parent.mainEn.line_wrap_set(self._parent.wordwrap)
-        print("Word wrap: {0}".format(self._parent.wordwrap))
-        if self._parent.wordwrap:
-            str = u"\u2713" + "Word Wrap"
-        else:
-            str = " Wordwrap"
-        obj.item_add(None, str, None, self.optionsPress)
-        it.selected_set(False)
+    def optionsWWPress(self, obj, it):
+        wordwrap = self._parent.mainEn.line_wrap
+        wordwrap = not wordwrap
+        self._parent.mainEn.line_wrap = wordwrap
+        it.content.state = wordwrap
+        #FIXME: is this variable needed for anything?
+        self._parent.wordwrap = wordwrap
 
     def copyPress(self, obj, it):
         self._parent.mainEn.selection_copy()
