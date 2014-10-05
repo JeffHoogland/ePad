@@ -46,21 +46,24 @@ ALIGN_RIGHT = 1.0, 0.5
 WORD_WRAP = False
 SHOW_POS = True
 
+
 class Interface(object):
-    def __init__( self ):
+    def __init__(self):
         self.mainWindow = StandardWindow("epad", "Untitled - ePad",
-                                            size=(600, 400))
+                                         size=(600, 400))
         self.mainWindow.callback_delete_request_add(self.closeChecks)
         self.mainWindow.elm_event_callback_add(self.eventsCb)
 
-        icon = Icon(self.mainWindow, size_hint_weight=EXPAND_BOTH,
-                                     size_hint_align=FILL_BOTH)
-        icon.standard_set('accessories-text-editor') 
+        icon = Icon(self.mainWindow,
+                    size_hint_weight=EXPAND_BOTH,
+                    size_hint_align=FILL_BOTH)
+        icon.standard_set('accessories-text-editor')
         icon.show()
         self.mainWindow.icon_object_set(icon.object_get())
 
-        self.mainBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH,
-                                            size_hint_align=FILL_BOTH)
+        self.mainBox = Box(self.mainWindow,
+                           size_hint_weight=EXPAND_BOTH,
+                           size_hint_align=FILL_BOTH)
         self.mainBox.show()
 
         self.mainTb = ePadToolbar(self, self.mainWindow)
@@ -75,29 +78,31 @@ class Interface(object):
         # Add label to show current cursor position
         if SHOW_POS:
             self.line_label = Label(self.mainWindow,
-                                     size_hint_weight=EXPAND_HORIZ,
-                                     size_hint_align=ALIGN_RIGHT)
-            self.curChanged(self.mainEn, self.line_label);
+                                    size_hint_weight=EXPAND_HORIZ,
+                                    size_hint_align=ALIGN_RIGHT)
+            self.curChanged(self.mainEn, self.line_label)
             self.line_label.show()
-            self.mainBox.pack_end( self.line_label)
+            self.mainBox.pack_end(self.line_label)
             self.mainEn.callback_cursor_changed_add(self.curChanged,
                                                     self.line_label)
 
         # Build our file selector for saving/loading files
-        self.fileBox = Box(self.mainWindow, size_hint_weight=EXPAND_BOTH,
-                                            size_hint_align=FILL_BOTH)
+        self.fileBox = Box(self.mainWindow,
+                           size_hint_weight=EXPAND_BOTH,
+                           size_hint_align=FILL_BOTH)
         self.fileBox.show()
 
-        self.fileLabel = Label(self.mainWindow, size_hint_weight=EXPAND_HORIZ,
-                                                size_hint_align=FILL_BOTH)
+        self.fileLabel = Label(self.mainWindow,
+                               size_hint_weight=EXPAND_HORIZ,
+                               size_hint_align=FILL_BOTH)
         self.fileLabel.text = ""
         self.fileLabel.show()
 
         self.fileSelector = Fileselector(self.mainWindow, is_save=False,
-                                          expandable=False, folder_only=False,
-                                          path=os.getenv("HOME"),
-                                          size_hint_weight=EXPAND_BOTH,
-                                          size_hint_align=FILL_BOTH)
+                                         expandable=False, folder_only=False,
+                                         path=os.getenv("HOME"),
+                                         size_hint_weight=EXPAND_BOTH,
+                                         size_hint_align=FILL_BOTH)
         self.fileSelector.callback_done_add(self.fileSelected)
         self.fileSelector.show()
 
@@ -116,10 +121,9 @@ class Interface(object):
         self.isNewFile = False
         self.confirmPopup = None
 
-
     def entryInit(self):
         self.mainEn = Entry(self.mainWindow, scrollable=True,
-                            line_wrap=self.wordwrap, autosave = False,
+                            line_wrap=self.wordwrap, autosave=False,
                             size_hint_weight=EXPAND_BOTH,
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
@@ -133,27 +137,29 @@ class Interface(object):
         index = entry.cursor_pos_get()
         # Replace <br /> tag with single char
         #   to simplify (line, col) calculation
-        a = entry.entry_get().replace("<br/>","\n")
+        a = entry.entry_get().replace("<br/>", "\n")
         line = a[:index].count("\n") + 1
-        col= len( a[:index].split("\n")[-1]) + 1
+        col = len(a[:index].split("\n")[-1]) + 1
         # Update label text with line, col
         label.text = "Ln {0} Col {1} ".format(line, col)
 
-    def textEdited( self, obj ):
+    def textEdited(self, obj):
         current_file = self.mainEn.file[0]
-        current_file = os.path.basename(current_file) \
-                         if current_file and not self.isNewFile else "Untitled"
+        current_file = \
+            os.path.basename(current_file) if \
+            current_file and not self.isNewFile else \
+            "Untitled"
         self.mainWindow.title = "*%s - ePad" % (current_file)
         self.isSaved = False
 
-    def fileSelected( self, fs, file_selected, onStartup=False ):
+    def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
         print(file_selected)
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
-                newfile = open(file_selected,'w')
+                newfile = open(file_selected, 'w')
                 tmp_text = self.mainEn.entry_get()
                 newfile.write(tmp_text)
                 newfile.close()
@@ -161,32 +167,32 @@ class Interface(object):
                 self.mainEn.entry_set(tmp_text)
                 self.mainEn.file_save()
                 self.mainWindow.title_set("%s - ePad"
-                                           % os.path.basename(file_selected))
+                                          % os.path.basename(file_selected))
                 self.isSaved = True
                 self.isNewFile = False
             else:
                 try:
                     self.mainEn.file_set(file_selected,
-                                        ELM_TEXT_FORMAT_PLAIN_UTF8)
+                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
                 except RuntimeError:
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad"
-                                           % os.path.basename(file_selected))
+                                          % os.path.basename(file_selected))
 
-    def optionsPress( self, obj, it ):
+    def optionsPress(self, obj, it):
         it.delete()
         self.wordwrap = not self.wordwrap
         self.mainEn.line_wrap_set(self.wordwrap)
         print("Word wrap: {0}".format(self.wordwrap))
         if self.wordwrap:
-            str = u"\u2713"+"Word Wrap"
+            str = u"\u2713" + "Word Wrap"
         else:
-            str =" Wordwrap"
+            str = " Wordwrap"
         obj.item_add(None, str, None, self.optionsPress)
         it.selected_set(False)
 
-    def newFile( self , obj=None, ignoreSave=False ):
-        if self.isSaved == True or ignoreSave == True:
+    def newFile(self, obj=None, ignoreSave=False):
+        if self.isSaved is True or ignoreSave is True:
             trans = Transit()
             trans.object_add(self.mainEn)
             trans.auto_reverse = True
@@ -204,24 +210,24 @@ class Interface(object):
             self.mainEn.delete()
             self.entryInit()
             self.isNewFile = True
-        elif self.confirmPopup == None:
+        elif self.confirmPopup is None:
             self.confirmSave(self.newFile)
 
-    def openFile( self, obj=None, ignoreSave=False ):
-        if self.isSaved == True or ignoreSave == True:
+    def openFile(self, obj=None, ignoreSave=False):
+        if self.isSaved is True or ignoreSave is True:
             self.fileSelector.is_save_set(False)
             self.fileLabel.text = "<b>Select a text file to open:</b>"
             self.flip.go(ELM_FLIP_ROTATE_YZ_CENTER_AXIS)
-        elif self.confirmPopup == None:
+        elif self.confirmPopup is None:
             self.confirmSave(self.openFile)
 
-    def confirmSave( self, ourCallback=None ):
+    def confirmSave(self, ourCallback=None):
         self.confirmPopup = Popup(self.mainWindow,
                                   size_hint_weight=EXPAND_BOTH)
-        self.confirmPopup.part_text_set("title,text","File Unsaved")
+        self.confirmPopup.part_text_set("title,text", "File Unsaved")
         current_file = self.mainEn.file[0]
-        current_file = os.path.basename(current_file) \
-                        if current_file else "Untitled"
+        current_file = \
+            os.path.basename(current_file) if current_file else "Untitled"
         self.confirmPopup.text = "Save changes to '%s'?" % (current_file)
         # Close without saving button
         no_btt = Button(self.mainWindow)
@@ -248,35 +254,35 @@ class Interface(object):
         self.confirmPopup.part_content_set("button3", sav_btt)
         self.confirmPopup.show()
 
-    def saveAs( self ):
+    def saveAs(self):
         self.fileSelector.is_save_set(True)
         self.fileLabel.text = "<b>Save new file to where:</b>"
         self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
 
-    def saveFile( self, obj=False ):
-        if self.mainEn.file_get()[0] == None or self.isNewFile:
+    def saveFile(self, obj=False):
+        if self.mainEn.file_get()[0] is None or self.isNewFile:
             self.saveAs()
         else:
             self.mainEn.file_save()
             self.mainWindow.title_set("%s - ePad"
-                                       % os.path.basename(self.mainEn.file[0]))
+                                      % os.path.basename(self.mainEn.file[0]))
             self.isSaved = True
 
-    def closeChecks( self, obj ):
+    def closeChecks(self, obj):
         print(self.isSaved)
-        if self.isSaved == False and self.confirmPopup == None:
+        if self.isSaved is False and self.confirmPopup is None:
             self.confirmSave(self.closeApp)
         else:
             self.closeApp()
 
-    def closePopup( self, bt, confirmPopup ):
+    def closePopup(self, bt, confirmPopup):
         self.confirmPopup.delete()
         self.confirmPopup = None
 
-    def closeApp( self, obj=False, trash=False ):
+    def closeApp(self, obj=False, trash=False):
         elementary.exit()
 
-    def eventsCb( self, obj, src, event_type, event ):
+    def eventsCb(self, obj, src, event_type, event):
         if event.modifier_is_set("Control"):
             if event.key.lower() == "n":
                 self.newFile()
@@ -286,7 +292,7 @@ class Interface(object):
                 self.saveFile()
             elif event.key.lower() == "o":
                 self.openFile()
-                
+
     # Legacy hack no longer needed
     #  there was an issue in elementary entry where it would
     #  accept those character controls
@@ -301,7 +307,7 @@ class Interface(object):
     #    else:
     #        return theText
 
-    def launch( self, startingFile=False ):
+    def launch(self, startingFile=False):
         if startingFile:
             self.fileSelected(self.fileSelector, startingFile, True)
         self.mainWindow.show()
@@ -313,9 +319,9 @@ class ePadToolbar(Toolbar):
         self._parent = parent
         self._canvas = canvas
 
-        self.homogeneous=False
-        self.size_hint_weight=(0.0, 0.0)
-        self.size_hint_align=(EVAS_HINT_FILL, 0.0)
+        self.homogeneous = False
+        self.size_hint_weight = (0.0, 0.0)
+        self.size_hint_align = (EVAS_HINT_FILL, 0.0)
         self.select_mode = ELM_OBJECT_SELECT_MODE_NONE
 
         self.menu_parent = canvas
@@ -344,54 +350,55 @@ class ePadToolbar(Toolbar):
         # Should be a way to have check list menu items
         self._parent.wordwrap = WORD_WRAP
         if self._parent.wordwrap:
-            str = u"\u2713"+"Word Wrap" # Unicode for check mark
+            str = u"\u2713" + "Word Wrap"  # Unicode for check mark
         else:
-            str ="  Wordwrap"
-        menu.item_add(None, str , None, self.optionsPress)
+            str = "  Wordwrap"
+        menu.item_add(None, str, None, self.optionsPress)
         # ---------------------------
 
         self.item_append("dialog-information", "About", self.aboutPress)
 
-
-    def newPress( self, obj, it ):
+    def newPress(self, obj, it):
         self._parent.newFile()
 
-    def openPress( self, obj, it ):
+    def openPress(self, obj, it):
         self._parent.openFile()
 
-    def savePress( self, obj, it ):
+    def savePress(self, obj, it):
         self._parent.saveFile()
 
-    def saveAsPress( self, obj, it ):
+    def saveAsPress(self, obj, it):
         self._parent.saveAs()
 
-    def optionsPress( self, obj, it ):
+    def optionsPress(self, obj, it):
         pass
 
-    def copyPress( self, obj, it ):
+    def copyPress(self, obj, it):
         self._parent.mainEn.selection_copy()
 
-    def pastePress( self, obj, it ):
+    def pastePress(self, obj, it):
         self._parent.mainEn.selection_paste()
 
-    def cutPress( self, obj, it ):
+    def cutPress(self, obj, it):
         self._parent.mainEn.selection_cut()
 
-    def selectAllPress( self, obj, it ):
+    def selectAllPress(self, obj, it):
         self._parent.mainEn.select_all()
 
-    def aboutPress( self, obj, it ):
+    def aboutPress(self, obj, it):
         #About popup
         self.popupAbout = Popup(self._canvas, size_hint_weight=EXPAND_BOTH)
-        self.popupAbout.text = "ePad - A simple text editor written in " \
-                                "python and elementary<br><br> " \
-                                "By: Jeff Hoogland"
+        self.popupAbout.text = (
+            "ePad - A simple text editor written in "
+            "python and elementary<br><br> "
+            "By: Jeff Hoogland"
+            )
         bt = Button(self._canvas, text="Done")
         bt.callback_clicked_add(self.aboutClose)
         self.popupAbout.part_content_set("button1", bt)
         self.popupAbout.show()
 
-    def aboutClose( self, bt ):
+    def aboutClose(self, bt):
         self.popupAbout.delete()
 
 
