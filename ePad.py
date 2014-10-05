@@ -37,6 +37,8 @@ from efl.elementary.check import Check
 # Imported here to stop class resolver complaining when an input event applies
 # to an internal layout object
 from efl.elementary.layout import Layout
+# Imported here to stop ValueError exception msgs in Fileselector dialog
+from efl.elementary.genlist import Genlist
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
