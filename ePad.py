@@ -63,43 +63,7 @@ class Interface(object):
                                             size_hint_align=FILL_BOTH)
         self.mainBox.show()
 
-        self.mainTb = Toolbar(self.mainWindow, homogeneous=False,
-                              size_hint_weight=(0.0, 0.0),
-                              size_hint_align=(EVAS_HINT_FILL, 0.0))
-        self.mainTb.menu_parent =  self.mainWindow
-
-        self.mainTb.item_append("document-new", "New", self.newPress)
-        self.mainTb.item_append("document-open", "Open", self.openPress)
-        self.mainTb.item_append("document-save", "Save", self.savePress)
-        self.mainTb.item_append("document-save-as", "Save As", self.saveAsPress)
-        # -- Edit Dropdown Menu --
-        tb_it = self.mainTb.item_append("edit", "Edit")
-        tb_it.menu = True
-        menu = tb_it.menu
-        menu.item_add(None, "Copy", "edit-copy", self.copyPress)
-        menu.item_add(None, "Paste", "edit-paste", self.pastePress)
-        menu.item_add(None, "Cut", "edit-cut", self.cutPress)
-        menu.item_separator_add()
-        menu.item_add(None, "Select All", "edit-select-all", self.selectAllPress)
-        # -----------------------
-        #
-        # -- Options Dropdown Menu --
-        #
-        # self.mainTb.item_append("settings", "Options", self.optionsPress)
-        tb_it = self.mainTb.item_append("preferences-desktop", "Options")
-        tb_it.menu = True
-        menu = tb_it.menu
-        # Should be a way to have check list menu items
-        self.wordwrap = WORD_WRAP
-        if self.wordwrap:
-            str = u"\u2713"+"Word Wrap" # Unicode for check mark
-        else:
-            str ="  Wordwrap"
-        menu.item_add(None, str , None, self.optionsPress)
-        # ---------------------------
-
-        self.mainTb.item_append("dialog-information", "About", self.aboutPress)
-
+        self.mainTb = ePadToolbar(self, self.mainWindow)
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
 
@@ -175,41 +139,6 @@ class Interface(object):
         # Update label text with line, col
         label.text = "Ln {0} Col {1} ".format(line, col)
 
-    def newPress( self, obj, it ):
-        self.newFile()
-        it.selected_set(False)
-
-    def openPress( self, obj, it ):
-        self.openFile()
-        it.selected_set(False)
-
-    def savePress( self, obj, it ):
-        self.saveFile()
-        it.selected_set(False)
-
-    def saveAsPress( self, obj, it ):
-        self.saveAs()
-        it.selected_set(False)
-
-    def optionsPress( self, obj, it ):
-        it.selected_set(False)
-
-    def copyPress( self, obj, it ):
-        self.mainEn.selection_copy()
-        it.selected_set(False)
-
-    def pastePress( self, obj, it ):
-        self.mainEn.selection_paste()
-        it.selected_set(False)
-
-    def cutPress( self, obj, it ):
-        self.mainEn.selection_cut()
-        it.selected_set(False)
-
-    def selectAllPress( self, obj, it ):
-        self.mainEn.select_all()
-        it.selected_set(False)
-
     def textEdited( self, obj ):
         current_file = self.mainEn.file[0]
         current_file = os.path.basename(current_file) \
@@ -255,21 +184,6 @@ class Interface(object):
             str =" Wordwrap"
         obj.item_add(None, str, None, self.optionsPress)
         it.selected_set(False)
-
-    def aboutPress( self, obj, it ):
-        #About popup
-        self.popupAbout = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
-        self.popupAbout.text = "ePad - A simple text editor written in " \
-                                "python and elementary<br><br> " \
-                                "By: Jeff Hoogland"
-        bt = Button(self.mainWindow, text="Done")
-        bt.callback_clicked_add(self.aboutClose)
-        self.popupAbout.part_content_set("button1", bt)
-        self.popupAbout.show()
-        it.selected_set(False)
-
-    def aboutClose( self, bt ):
-        self.popupAbout.delete()
 
     def newFile( self , obj=None, ignoreSave=False ):
         if self.isSaved == True or ignoreSave == True:
@@ -391,6 +305,95 @@ class Interface(object):
         if startingFile:
             self.fileSelected(self.fileSelector, startingFile, True)
         self.mainWindow.show()
+
+
+class ePadToolbar(Toolbar):
+    def __init__(self, parent, canvas):
+        Toolbar.__init__(self, canvas)
+        self._parent = parent
+        self._canvas = canvas
+
+        self.homogeneous=False
+        self.size_hint_weight=(0.0, 0.0)
+        self.size_hint_align=(EVAS_HINT_FILL, 0.0)
+        self.select_mode = ELM_OBJECT_SELECT_MODE_NONE
+
+        self.menu_parent = canvas
+
+        self.item_append("document-new", "New", self.newPress)
+        self.item_append("document-open", "Open", self.openPress)
+        self.item_append("document-save", "Save", self.savePress)
+        self.item_append("document-save-as", "Save As", self.saveAsPress)
+        # -- Edit Dropdown Menu --
+        tb_it = self.item_append("edit", "Edit")
+        tb_it.menu = True
+        menu = tb_it.menu
+        menu.item_add(None, "Copy", "edit-copy", self.copyPress)
+        menu.item_add(None, "Paste", "edit-paste", self.pastePress)
+        menu.item_add(None, "Cut", "edit-cut", self.cutPress)
+        menu.item_separator_add()
+        menu.item_add(None, "Select All", "edit-select-all", self.selectAllPress)
+        # -----------------------
+        #
+        # -- Options Dropdown Menu --
+        #
+        # self.item_append("settings", "Options", self.optionsPress)
+        tb_it = self.item_append("preferences-desktop", "Options")
+        tb_it.menu = True
+        menu = tb_it.menu
+        # Should be a way to have check list menu items
+        self._parent.wordwrap = WORD_WRAP
+        if self._parent.wordwrap:
+            str = u"\u2713"+"Word Wrap" # Unicode for check mark
+        else:
+            str ="  Wordwrap"
+        menu.item_add(None, str , None, self.optionsPress)
+        # ---------------------------
+
+        self.item_append("dialog-information", "About", self.aboutPress)
+
+
+    def newPress( self, obj, it ):
+        self._parent.newFile()
+
+    def openPress( self, obj, it ):
+        self._parent.openFile()
+
+    def savePress( self, obj, it ):
+        self._parent.saveFile()
+
+    def saveAsPress( self, obj, it ):
+        self._parent.saveAs()
+
+    def optionsPress( self, obj, it ):
+        pass
+
+    def copyPress( self, obj, it ):
+        self._parent.mainEn.selection_copy()
+
+    def pastePress( self, obj, it ):
+        self._parent.mainEn.selection_paste()
+
+    def cutPress( self, obj, it ):
+        self._parent.mainEn.selection_cut()
+
+    def selectAllPress( self, obj, it ):
+        self._parent.mainEn.select_all()
+
+    def aboutPress( self, obj, it ):
+        #About popup
+        self.popupAbout = Popup(self._canvas, size_hint_weight=EXPAND_BOTH)
+        self.popupAbout.text = "ePad - A simple text editor written in " \
+                                "python and elementary<br><br> " \
+                                "By: Jeff Hoogland"
+        bt = Button(self._canvas, text="Done")
+        bt.callback_clicked_add(self.aboutClose)
+        self.popupAbout.part_content_set("button1", bt)
+        self.popupAbout.show()
+
+    def aboutClose( self, bt ):
+        self.popupAbout.delete()
+
 
 if __name__ == "__main__":
     elementary.init()
