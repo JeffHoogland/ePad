@@ -152,7 +152,7 @@ class Interface(object):
         self.mainEn.line_wrap_set(self.wordwrap)
         self.mainEn.autosave_set(False) # set to false to reduce disk I/O
         self.mainEn.elm_event_callback_add(self.eventsCb)
-        self.mainEn.markup_filter_append(self.textFilter)
+        # self.mainEn.markup_filter_append(self.textFilter)
         self.mainEn.show()
         self.mainBox.pack_end(self.mainEn)
 
@@ -365,12 +365,12 @@ class Interface(object):
             elif event.key.lower() == "o":
                 self.openFile()
 
-    def textFilter( self, obj, theText, data ):
-        #Block ctrl+hot keys
-        if theText == "" or theText == "" or theText == "":
-            return None
-        else:
-            return theText
+    # def textFilter( self, obj, theText, data ):
+    #     #Block ctrl+hot keys
+    #     if theText == "" or theText == "" or theText == "":
+    #         return None
+    #     else:
+    #         return theText
 
     def launch( self, startingFile=False ):
         if startingFile:
