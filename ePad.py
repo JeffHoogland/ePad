@@ -207,7 +207,7 @@ class Interface(object):
         if ourFile and not self.isNewFile:
             self.mainWindow.title_set("*%s - ePad" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1])
         else:
-            self.mainWindow.title_set("*Untitlted - ePad")
+            self.mainWindow.title_set("*Untitled - ePad")
         self.isSaved = False
 
     def fileSelected( self, fs, file_selected, onStartup=False ):
@@ -275,7 +275,7 @@ class Interface(object):
 
             time.sleep(0.5)
 
-            self.mainWindow.title_set("Untitlted - ePad")
+            self.mainWindow.title_set("Untitled - ePad")
             self.mainEn.delete()
             self.entryInit()
             self.isNewFile = True
@@ -296,7 +296,7 @@ class Interface(object):
         if self.mainEn.file_get()[0]:
             self.confirmPopup.text = "Save changes to '%s'?" % self.mainEn.file_get()[0].split("/")[len(self.mainEn.file_get()[0].split("/"))-1]
         else:
-            self.confirmPopup.text = "Save changes to 'Untitlted'?"
+            self.confirmPopup.text = "Save changes to 'Untitled'?"
         # Close without saving button
         no_btt = Button(self.mainWindow)
         no_btt.text = "No"
