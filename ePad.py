@@ -179,18 +179,6 @@ class Interface(object):
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
 
-    def optionsPress(self, obj, it):
-        it.delete()
-        self.wordwrap = not self.wordwrap
-        self.mainEn.line_wrap_set(self.wordwrap)
-        print("Word wrap: {0}".format(self.wordwrap))
-        if self.wordwrap:
-            str = u"\u2713" + "Word Wrap"
-        else:
-            str = " Wordwrap"
-        obj.item_add(None, str, None, self.optionsPress)
-        it.selected_set(False)
-
     def newFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
             trans = Transit()
@@ -371,7 +359,16 @@ class ePadToolbar(Toolbar):
         self._parent.saveAs()
 
     def optionsPress(self, obj, it):
-        pass
+        it.delete()
+        self._parent.wordwrap = not self._parent.wordwrap
+        self._parent.mainEn.line_wrap_set(self._parent.wordwrap)
+        print("Word wrap: {0}".format(self._parent.wordwrap))
+        if self._parent.wordwrap:
+            str = u"\u2713" + "Word Wrap"
+        else:
+            str = " Wordwrap"
+        obj.item_add(None, str, None, self.optionsPress)
+        it.selected_set(False)
 
     def copyPress(self, obj, it):
         self._parent.mainEn.selection_copy()
