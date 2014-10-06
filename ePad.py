@@ -1,13 +1,28 @@
-#ePad - a simple text editor written in Elementary and Python
+#!/usr/bin/python
+
+# ePad - a simple text editor written in Elementary and Python
 #
-#By: Jeff Hoogland
-#Started On: 03/16/2014
+# This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+__author__ = "Jeff Hoogland"
+__contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
+__copyright__ = "Copyright (C) 2014 Bodhi Linux"
 
 import sys
 import os
 import time
 from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
-from efl.elementary.object import EVAS_CALLBACK_KEY_UP, EVAS_CALLBACK_KEY_DOWN
 from efl import elementary
 from efl.elementary.window import StandardWindow
 from efl.elementary.box import Box
@@ -15,23 +30,13 @@ from efl.elementary.button import Button
 from efl.elementary.label import Label
 from efl.elementary.icon import Icon
 from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8
-from efl.elementary.popup import Popup, ELM_WRAP_CHAR
-from efl.elementary.toolbar import Toolbar, ELM_TOOLBAR_SHRINK_MENU, \
-    ELM_OBJECT_SELECT_MODE_NONE
-from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_X_CENTER_AXIS, \
-    ELM_FLIP_ROTATE_Y_CENTER_AXIS, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
-    ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_CUBE_LEFT, ELM_FLIP_CUBE_RIGHT, \
-    ELM_FLIP_CUBE_UP, ELM_FLIP_CUBE_DOWN, ELM_FLIP_PAGE_LEFT, \
-    ELM_FLIP_PAGE_RIGHT, ELM_FLIP_PAGE_UP, ELM_FLIP_PAGE_DOWN, \
-    ELM_FLIP_DIRECTION_UP, ELM_FLIP_DIRECTION_DOWN, \
-    ELM_FLIP_DIRECTION_LEFT, ELM_FLIP_DIRECTION_RIGHT, \
-    ELM_FLIP_INTERACTION_NONE, ELM_FLIP_INTERACTION_ROTATE, \
-    ELM_FLIP_INTERACTION_CUBE, ELM_FLIP_INTERACTION_PAGE
+from efl.elementary.popup import Popup
+from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
+from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
+    ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
 from efl.elementary.fileselector import Fileselector
-from efl.elementary.transit import Transit, ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, \
-    ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT, ELM_TRANSIT_EFFECT_FLIP_AXIS_X, \
-    ELM_TRANSIT_EFFECT_FLIP_AXIS_Y, ELM_TRANSIT_TWEEN_MODE_ACCELERATE, \
-    ELM_TRANSIT_TWEEN_MODE_DECELERATE, TransitCustomEffect
+from efl.elementary.transit import Transit, \
+    ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
 from efl.elementary.check import Check
 
 # Imported here to stop class resolver complaining when an input event applies
@@ -73,8 +78,7 @@ class Interface(object):
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
 
-        #Initialize Text entry box
-
+        # Initialize Text entry box
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
 
@@ -112,7 +116,8 @@ class Interface(object):
         self.fileBox.pack_end(self.fileLabel)
         self.fileBox.pack_end(self.fileSelector)
 
-        # the flip object has the file selector on one side and the GUI on the other
+        # Flip object has the file selector on one side
+        #   and the GUI on the other
         self.flip = Flip(self.mainWindow, size_hint_weight=EXPAND_BOTH,
                          size_hint_align=FILL_BOTH)
         self.flip.part_content_set("front", self.mainBox)
@@ -140,9 +145,9 @@ class Interface(object):
         index = entry.cursor_pos_get()
         # Replace <br /> tag with single char
         #   to simplify (line, col) calculation
-        a = entry.entry_get().replace("<br/>", "\n")
-        line = a[:index].count("\n") + 1
-        col = len(a[:index].split("\n")[-1]) + 1
+        tmp_text = entry.entry_get().replace("<br/>", "\n")
+        line = tmp_text[:index].count("\n") + 1
+        col = len(tmp_text[:index].split("\n")[-1]) + 1
         # Update label text with line, col
         label.text = "Ln {0} Col {1} ".format(line, col)
 
@@ -329,7 +334,8 @@ class ePadToolbar(Toolbar):
         menu.item_add(None, "Paste", "edit-paste", self.pastePress)
         menu.item_add(None, "Cut", "edit-cut", self.cutPress)
         menu.item_separator_add()
-        menu.item_add(None, "Select All", "edit-select-all", self.selectAllPress)
+        menu.item_add(None, "Select All", "edit-select-all",
+                      self.selectAllPress)
         # -----------------------
         #
         # -- Options Dropdown Menu --
@@ -338,7 +344,6 @@ class ePadToolbar(Toolbar):
         tb_it = self.item_append("preferences-desktop", "Options")
         tb_it.menu = True
         menu = tb_it.menu
-        # Should be a way to have check list menu items
         self._parent.wordwrap = WORD_WRAP
         it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
         chk = Check(canvas, disabled=True)
@@ -365,7 +370,7 @@ class ePadToolbar(Toolbar):
         wordwrap = not wordwrap
         self._parent.mainEn.line_wrap = wordwrap
         it.content.state = wordwrap
-        #FIXME: is this variable needed for anything?
+        # FIXME: is this variable needed for anything?
         self._parent.wordwrap = wordwrap
 
     def copyPress(self, obj, it):
@@ -381,7 +386,7 @@ class ePadToolbar(Toolbar):
         self._parent.mainEn.select_all()
 
     def aboutPress(self, obj, it):
-        #About popup
+        # About popup
         self.popupAbout = Popup(self._canvas, size_hint_weight=EXPAND_BOTH)
         self.popupAbout.text = (
             "ePad - A simple text editor written in "
