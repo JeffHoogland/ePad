@@ -18,5 +18,6 @@ TODO List:
 - Command line arguments
 - Man Page
 - Optional support for Gtk recently used
+- Internationalization
 
 Project Started by Jeff Hoogland on: 03/16/2014
