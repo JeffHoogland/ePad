@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# encoding: utf-8
 
 # ePad - a simple text editor written in Elementary and Python
 #
@@ -15,35 +16,47 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function # May as well bite the bullet
+
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
+__version__ = "0.5.6"
+
+PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
+
+def printErr(*objs):
+    print(*objs, file=sys.stderr)
 
 import sys
 import os
 import time
-from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
-from efl import elementary
-from efl.elementary.window import StandardWindow
-from efl.elementary.box import Box
-from efl.elementary.button import Button
-from efl.elementary.label import Label
-from efl.elementary.icon import Icon
-from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8
-from efl.elementary.popup import Popup
-from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
-from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
-    ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
-from efl.elementary.fileselector import Fileselector
-from efl.elementary.transit import Transit, \
-    ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
-from efl.elementary.check import Check
+try:
+    from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+    from efl import elementary
+    from efl.elementary.window import StandardWindow
+    from efl.elementary.box import Box
+    from efl.elementary.button import Button
+    from efl.elementary.label import Label
+    from efl.elementary.icon import Icon
+    from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8
+    from efl.elementary.popup import Popup
+    from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
+    from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
+        ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
+    from efl.elementary.fileselector import Fileselector
+    from efl.elementary.transit import Transit, \
+        ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
+    from efl.elementary.check import Check
 
-# Imported here to stop class resolver complaining when an input event applies
-# to an internal layout object
-from efl.elementary.layout import Layout
-# Imported here to stop ValueError exception msgs in Fileselector dialog
-from efl.elementary.genlist import Genlist
+    # Imported here to stop class resolver complaining when an input event
+    # applies to an internal layout object
+    from efl.elementary.layout import Layout
+    # Imported here to stop ValueError exception msgs in Fileselector dialog
+    from efl.elementary.genlist import Genlist
+except ImportError:
+    printErr("ImportError: Please install Python-EFL:\n            ", PY_EFL)
+    exit(1)
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
@@ -101,8 +114,7 @@ class Interface(object):
 
         self.fileLabel = Label(self.mainWindow,
                                size_hint_weight=EXPAND_HORIZ,
-                               size_hint_align=FILL_BOTH)
-        self.fileLabel.text = ""
+                               size_hint_align=FILL_BOTH, text="")
         self.fileLabel.show()
 
         self.fileSelector = Fileselector(self.mainWindow, is_save=False,
@@ -388,8 +400,10 @@ class ePadToolbar(Toolbar):
     def aboutPress(self, obj, it):
         # About popup
         self.popupAbout = Popup(self._canvas, size_hint_weight=EXPAND_BOTH)
+        self.popupAbout.part_text_set("title,text",
+                                      "ePad version {0}".format(__version__))
         self.popupAbout.text = (
-            "ePad - A simple text editor written in "
+            "A simple text editor written in "
             "python and elementary<br><br> "
             "By: Jeff Hoogland"
             )
