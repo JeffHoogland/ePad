@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.7"
+__version__ = "0.5.8 Beta"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -37,7 +37,9 @@ import time
 try:
     from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
     from efl import elementary
-    from efl.elementary.window import StandardWindow
+    from efl.elementary.window import StandardWindow, Window
+    from efl.elementary.window import ELM_WIN_DIALOG_BASIC
+    from efl.elementary.background import Background
     from efl.elementary.box import Box
     from efl.elementary.button import Button
     from efl.elementary.label import Label
@@ -63,12 +65,16 @@ except ImportError:
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
+EXPAND_NONE = 0.0, 0.0
 FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
 FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
+PADDING = 15, 0
 WORD_WRAP = False
 SHOW_POS = True
+CASE_SENSITIVE = True
+WHOLE_WORD = False
 
 
 class Interface(object):
@@ -93,7 +99,8 @@ class Interface(object):
         self.mainTb = ePadToolbar(self, self.mainWindow)
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
-
+        self.find = findWin(self, self.mainWindow)
+        self.find.hide()
         # Initialize Text entry box
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
@@ -324,6 +331,9 @@ class Interface(object):
     #    else:
     #        return theText
 
+    def showFind(self):
+        self.find.findDialog.show()
+
     def launch(self, startingFile=False):
         if startingFile:
             self.fileSelected(self.fileSelector, startingFile, True)
@@ -351,6 +361,8 @@ class ePadToolbar(Toolbar):
                          lambda self, obj: self._parent.saveFile())
         self.item_append("document-save-as", "Save As",
                          lambda self, obj: self._parent.saveAs())
+        self.item_append("edit-find", "Find",
+                         lambda self, obj: self._parent.showFind())
         # -- Edit Dropdown Menu --
         tb_it = self.item_append("edit", "Edit")
         tb_it.menu = True
@@ -416,6 +428,132 @@ class ePadToolbar(Toolbar):
     def aboutClose(self, bt):
         self.popupAbout.delete()
 
+
+class findWin(Window):
+    def __init__(self, parent, canvas):
+
+        # Dialog Window Basics
+        self.findDialog = Window('find', ELM_WIN_DIALOG_BASIC,  title='Find')
+        self.findDialog.callback_delete_request_add(self.closeFind)
+
+        self._parent = parent
+        self._canvas = canvas
+        #    Set Window Icon
+        #       Icons work  in ubuntu min everything compiled
+        #       but not bodhi rc3
+        icon = Icon(self.findDialog,
+                    size_hint_weight=EXPAND_BOTH,
+                    size_hint_align=FILL_BOTH)
+        icon.standard_set('edit-find')
+        icon.show()
+        self.findDialog.icon_object_set(icon.object_get())
+        #    Set Dialog background
+        background = Background(self.findDialog, size_hint_weight=EXPAND_BOTH)
+        self.findDialog.resize_object_add(background)
+        background.show()
+        #    Main box to hold shit
+        mainBox = Box(self.findDialog, size_hint_weight=EXPAND_BOTH)
+        self.findDialog.resize_object_add(mainBox)
+        mainBox.show()
+
+        # Search Section
+        #    Horizontal Box to hold search stuff
+        seachBox = Box(self.findDialog, horizontal=True,
+                       size_hint_weight=EXPAND_HORIZ,
+                       size_hint_align=FILL_BOTH, padding=PADDING)
+        seachBox.show()
+        mainBox.pack_end(seachBox)
+        #    Label for search entry
+        seachLabel = Label(self.findDialog, text="Search for:",
+                           size_hint_weight=EXPAND_NONE,
+                           size_hint_align=FILL_HORIZ)
+        seachBox.pack_end(seachLabel)
+        seachLabel.show()
+        #    Search Entry
+        self.sent = Entry(self.findDialog, scrollable=True, single_line=True,
+                          size_hint_weight=EXPAND_HORIZ,
+                          size_hint_align=FILL_HORIZ)
+        self.sent.callback_activated_add(self.find)  # Enter activates find fn
+        self.sent.show()
+        seachBox.pack_end(self.sent)
+
+        #    Check boxs for Search Options
+        #   FIXME: add callbacks  These states should be in config file
+        caseCk = Check(self.findDialog, text="Case sensitive",
+                       size_hint_weight=EXPAND_BOTH,
+                       size_hint_align=FILL_HORIZ, state=CASE_SENSITIVE)
+        caseCk.callback_changed_add(self.ckCase)
+        caseCk.show()
+        mainBox.pack_end(caseCk)
+        wordCk = Check(self.findDialog, text="Match only a whole word",
+                       size_hint_weight=EXPAND_BOTH,
+                       size_hint_align=FILL_HORIZ, state=WHOLE_WORD)
+        wordCk.callback_changed_add(self.ckWord)
+        wordCk.show()
+        mainBox.pack_end(wordCk)
+
+        # Dialog Buttons
+        #    Horizontal Box for Dialog Buttons
+        buttonBox = Box(self.findDialog, horizontal=True,
+                        size_hint_weight=EXPAND_HORIZ,
+                        size_hint_align=FILL_BOTH, padding=PADDING)
+        buttonBox.size_hint_weight_set(EVAS_HINT_EXPAND, 0.0)
+        buttonBox.show()
+        mainBox.pack_end(buttonBox)
+        #    Cancel Button
+        cancelBtn = Button(self.findDialog, text="Cancel",
+                           size_hint_weight=EXPAND_NONE)
+        cancelBtn.callback_clicked_add(self.closeFind)
+        cancelBtn.show()
+        buttonBox.pack_end(cancelBtn)
+        #    Ok Button
+        okBtn = Button(self.findDialog, text=" Find ",
+                       size_hint_weight=EXPAND_NONE)
+        okBtn.callback_clicked_add(self.find)
+        okBtn.show()
+        buttonBox.pack_end(okBtn)
+
+        # Ensure the min height
+        self.findDialog.resize(300, 1)
+        # self.findDialog.show()
+
+    def find(self, obj):
+        searchStr = self.sent.entry_get()
+        if searchStr:
+            print('Search string: {0}'.format(searchStr))
+        else:
+            print('Search string is Null')
+        self.notImplemented()
+        self.findDialog.hide()
+
+    def closeFind(self, obj=False, trash=False):
+        self.findDialog.hide()
+
+    def launch(self, startingFile=False):
+        self.findDialog.show()
+
+    def ckCase(self, obj):
+        global CASE_SENSITIVE
+        CASE_SENSITIVE = not CASE_SENSITIVE
+        print("CASE_SENSITIVE = {0}".format(CASE_SENSITIVE))
+
+    def ckWord(self, obj):
+        global WHOLE_WORD
+        WHOLE_WORD = not WHOLE_WORD
+        print("WHOLE_WORD = {0}".format(WHOLE_WORD))
+
+    def notImplemented(self):
+        # About popup
+        self.popupAlert = Popup(self._canvas, size_hint_weight=EXPAND_BOTH)
+
+        self.popupAlert.text = 'Shit: Not Implemented yet'
+        bt = Button(self._canvas, text="Ok")
+        bt.callback_clicked_add(self.niClose)
+        self.popupAlert.part_content_set("button1", bt)
+        self.popupAlert.show()
+
+    def niClose(self, bt):
+        self.popupAlert.delete()
 
 if __name__ == "__main__":
     import argparse as ag
