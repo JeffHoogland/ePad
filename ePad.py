@@ -437,7 +437,7 @@ if __name__ == "__main__":
     if ourFile:
         if ourFile[0:7] == "file://":
             print(ourFile)
-            ourFile = ourFile[7:len(ourFile)]
+            ourFile = ourFile[7:-1]
         print(ourFile)
         GUI.launch(ourFile)
     else:
