@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function # May as well bite the bullet
+from __future__ import print_function  # May as well bite the bullet
 
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
@@ -24,6 +24,7 @@ __copyright__ = "Copyright (C) 2014 Bodhi Linux"
 __version__ = "0.5.6"
 
 PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
+
 
 def printErr(*objs):
     print(*objs, file=sys.stderr)
@@ -150,7 +151,12 @@ class Interface(object):
         self.mainEn.elm_event_callback_add(self.eventsCb)
         # self.mainEn.markup_filter_append(self.textFilter)
         self.mainEn.show()
-        self.mainBox.pack_end(self.mainEn)
+        try:
+            self.mainBox.pack_before(self.mainEn, self.line_label)
+        except AttributeError:
+            # line_label has not been initialized on first run
+            #   Should have better logic on all this
+            self.mainBox.pack_end(self.mainEn)
 
     def curChanged(self, entry, label):
         # get linear index into current text
