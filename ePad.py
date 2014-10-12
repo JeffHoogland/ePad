@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.6"
+__version__ = "0.5.7"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
