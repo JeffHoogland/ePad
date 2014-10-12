@@ -22,7 +22,9 @@ __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
 __version__ = "0.5.6"
-
+__description__ = 'A simple text editor for the Enlightenment Desktop.'
+__github__ = 'https://github.com/JeffHoogland/ePad'
+__source__ = 'Source code and bug reports: {0}'.format(__github__)
 PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
 
 
@@ -416,11 +418,23 @@ class ePadToolbar(Toolbar):
 
 
 if __name__ == "__main__":
-    elementary.init()
+    import argparse as ag
 
+    # Parse Arguments
+    #   More arguments will be added with increased functionality
+    parser = ag.ArgumentParser(prog='ePad',
+                               description=__description__,
+                               version='%(prog)s {0}'.format(__version__),
+                               epilog=__source__)
+    parser.add_argument('filepath', nargs='?', metavar='filename',
+                        help='path to file to open')
+    results = parser.parse_args()
+    ourFile = results.filepath
+
+    # Start App
+    elementary.init()
     GUI = Interface()
-    if len(sys.argv) > 1:
-        ourFile = str(sys.argv[1])
+    if ourFile:
         if ourFile[0:7] == "file://":
             print(ourFile)
             ourFile = ourFile[7:len(ourFile)]
@@ -428,6 +442,7 @@ if __name__ == "__main__":
         GUI.launch(ourFile)
     else:
         GUI.launch()
-
     elementary.run()
+
+    # Shutdown App
     elementary.shutdown()
