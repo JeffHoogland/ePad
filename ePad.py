@@ -163,6 +163,7 @@ class Interface(object):
         index = entry.cursor_pos_get()
         # Replace <br /> tag with single char
         #   to simplify (line, col) calculation
+        #   FIXME: This logic fails if user types text <br />
         tmp_text = entry.entry_get().replace("<br/>", "\n")
         line = tmp_text[:index].count("\n") + 1
         col = len(tmp_text[:index].split("\n")[-1]) + 1
@@ -340,10 +341,14 @@ class ePadToolbar(Toolbar):
 
         self.menu_parent = canvas
 
-        self.item_append("document-new", "New", self.newPress)
-        self.item_append("document-open", "Open", self.openPress)
-        self.item_append("document-save", "Save", self.savePress)
-        self.item_append("document-save-as", "Save As", self.saveAsPress)
+        self.item_append("document-new", "New",
+                         lambda self, obj: self._parent.newFile())
+        self.item_append("document-open", "Open",
+                         lambda self, obj: self._parent.openFile())
+        self.item_append("document-save", "Save",
+                         lambda self, obj: self._parent.saveFile())
+        self.item_append("document-save-as", "Save As",
+                         lambda self, obj: self._parent.saveAs())
         # -- Edit Dropdown Menu --
         tb_it = self.item_append("edit", "Edit")
         tb_it.menu = True
@@ -370,18 +375,6 @@ class ePadToolbar(Toolbar):
         # ---------------------------
 
         self.item_append("dialog-information", "About", self.aboutPress)
-
-    def newPress(self, obj, it):
-        self._parent.newFile()
-
-    def openPress(self, obj, it):
-        self._parent.openFile()
-
-    def savePress(self, obj, it):
-        self._parent.saveFile()
-
-    def saveAsPress(self, obj, it):
-        self._parent.saveAs()
 
     def optionsWWPress(self, obj, it):
         wordwrap = self._parent.mainEn.line_wrap
