@@ -424,10 +424,10 @@ if __name__ == "__main__":
     #   More arguments will be added with increased functionality
     parser = ag.ArgumentParser(prog='ePad',
                                description=__description__,
-                               version='%(prog)s {0}'.format(__version__),
                                epilog=__source__)
     parser.add_argument('filepath', nargs='?', metavar='filename',
                         help='path to file to open')
+    parser.add_argument('--version', action='version', version='%(prog)s {0}'.format(__version__))
     results = parser.parse_args()
     ourFile = results.filepath
 
