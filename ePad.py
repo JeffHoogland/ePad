@@ -44,7 +44,8 @@ try:
     from efl.elementary.button import Button
     from efl.elementary.label import Label
     from efl.elementary.icon import Icon
-    from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8
+    from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
+        markup_to_utf8
     from efl.elementary.popup import Popup
     from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
     from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
@@ -172,8 +173,7 @@ class Interface(object):
         index = entry.cursor_pos_get()
         # Replace <br /> tag with single char
         #   to simplify (line, col) calculation
-        #   FIXME: This logic fails if user types text <br />
-        tmp_text = entry.entry_get().replace("<br/>", "\n")
+        tmp_text = markup_to_utf8(entry.entry_get())
         line = tmp_text[:index].count("\n") + 1
         col = len(tmp_text[:index].split("\n")[-1]) + 1
         # Update label text with line, col
@@ -565,7 +565,8 @@ if __name__ == "__main__":
                                epilog=__source__)
     parser.add_argument('filepath', nargs='?', metavar='filename',
                         help='path to file to open')
-    parser.add_argument('--version', action='version', version='%(prog)s {0}'.format(__version__))
+    parser.add_argument('--version', action='version', 
+                        version='%(prog)s {0}'.format(__version__))
     results = parser.parse_args()
     ourFile = results.filepath
 
