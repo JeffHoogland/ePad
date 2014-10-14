@@ -72,10 +72,12 @@ FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
 PADDING = 15, 0
+# Global variables to be eventually set by user config file
 WORD_WRAP = False
 SHOW_POS = True
 CASE_SENSITIVE = True
 WHOLE_WORD = False
+MAX_SELECTED = 50
 
 
 class Interface(object):
@@ -332,7 +334,7 @@ class Interface(object):
     #        return theText
 
     def showFind(self):
-        self.find.findDialog.show()
+        self.find.launch()
 
     def launch(self, startingFile=False):
         if startingFile:
@@ -438,6 +440,10 @@ class findWin(Window):
 
         self._parent = parent
         self._canvas = canvas
+        self.selected = ''
+        self.lastSelected = None
+        self.entryIndex = 0
+
         #    Set Window Icon
         #       Icons work  in ubuntu min everything compiled
         #       but not bodhi rc3
@@ -530,6 +536,23 @@ class findWin(Window):
         self.findDialog.hide()
 
     def launch(self, startingFile=False):
+
+        # Set focus on findDialog in cases where it is shown but ePad has focus
+        self.findDialog.raise_()
+
+        highLighted = self._parent.mainEn.selection_get()
+        self.entryIndex = self._parent.mainEn.cursor_pos_get()
+
+        # Entry text is set to highlighted text if available
+        #   provided highlighted text is less than MAX_SELECTED
+        # Otherwise it is set to lastSelected text or left empty
+        if not highLighted and self.lastSelected:
+            self.selected = self.lastSelected
+        else:
+            if highLighted and len(highLighted) < MAX_SELECTED:
+                self.selected = highLighted
+                self.lastSelected = self.selected
+        self.sent.entry_set(self.selected)
         self.findDialog.show()
 
     def ckCase(self, obj):
@@ -565,7 +588,7 @@ if __name__ == "__main__":
                                epilog=__source__)
     parser.add_argument('filepath', nargs='?', metavar='filename',
                         help='path to file to open')
-    parser.add_argument('--version', action='version', 
+    parser.add_argument('--version', action='version',
                         version='%(prog)s {0}'.format(__version__))
     results = parser.parse_args()
     ourFile = results.filepath
