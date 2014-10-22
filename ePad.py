@@ -95,20 +95,9 @@ class Interface(object):
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
 
-        # Initialize Text entry box
+        # Initialize Text entry box and line label
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
-
-        # Add label to show current cursor position
-        if SHOW_POS:
-            self.line_label = Label(self.mainWindow,
-                                    size_hint_weight=EXPAND_HORIZ,
-                                    size_hint_align=ALIGN_RIGHT)
-            self.curChanged(self.mainEn, self.line_label)
-            self.line_label.show()
-            self.mainBox.pack_end(self.line_label)
-            self.mainEn.callback_cursor_changed_add(self.curChanged,
-                                                    self.line_label)
 
         # Build our file selector for saving/loading files
         self.fileBox = Box(self.mainWindow,
@@ -152,6 +141,23 @@ class Interface(object):
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.elm_event_callback_add(self.eventsCb)
+        # delete line lable if it exist so we can create and add new one
+        #    Later need to rethink logic here
+        try:
+            self.line_label.delete()
+        except AttributeError:
+            pass
+        # Add label to show current cursor position
+        if SHOW_POS:
+            self.line_label = Label(self.mainWindow,
+                                    size_hint_weight=EXPAND_HORIZ,
+                                    size_hint_align=ALIGN_RIGHT)
+
+            self.mainEn.callback_cursor_changed_add(self.curChanged,
+                                                    self.line_label)
+            self.curChanged(self.mainEn, self.line_label)
+            self.line_label.show()
+            self.mainBox.pack_end(self.line_label)
         # self.mainEn.markup_filter_append(self.textFilter)
         self.mainEn.show()
         try:
@@ -427,7 +433,7 @@ if __name__ == "__main__":
                                epilog=__source__)
     parser.add_argument('filepath', nargs='?', metavar='filename',
                         help='path to file to open')
-    parser.add_argument('--version', action='version', 
+    parser.add_argument('--version', action='version',
                         version='%(prog)s {0}'.format(__version__))
     results = parser.parse_args()
     ourFile = results.filepath
