@@ -433,7 +433,7 @@ if __name__ == "__main__":
                                epilog=__source__)
     parser.add_argument('filepath', nargs='?', metavar='filename',
                         help='path to file to open')
-    parser.add_argument('--version', action='version',
+    parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s {0}'.format(__version__))
     results = parser.parse_args()
     ourFile = results.filepath
