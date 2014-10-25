@@ -168,7 +168,9 @@ class Interface(object):
             self.line_label.show()
             self.mainBox.pack_end(self.line_label)
         # self.mainEn.markup_filter_append(self.textFilter)
+        
         self.mainEn.show()
+        self.mainEn.focus_set(1)
         try:
             self.mainBox.pack_before(self.mainEn, self.line_label)
         except AttributeError:
@@ -222,6 +224,8 @@ class Interface(object):
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
+                                          
+                self.mainEn.focus_set(1)
 
     def newFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
@@ -242,8 +246,10 @@ class Interface(object):
             self.mainEn.delete()
             self.entryInit()
             self.isNewFile = True
+            
         elif self.confirmPopup is None:
             self.confirmSave(self.newFile)
+        self.mainEn.focus_set(1)
 
     def openFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
