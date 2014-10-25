@@ -1,0 +1,91 @@
+.\"     Title: ePad
+.\"    Author: rbt-ylee <ylee@bodhilinux.com>
+.\"      Date: 21 October 2014
+.\"    Manual: EPAD
+.\"    Source: Linux
+.\"  Language: English
+.\"
+.TH "EPAD" 1 "21 October 2014" "0.5.7" "epad man page"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH NAME
+epad \- a python-efl  based simple text editor
+.SH SYNOPSIS
+.B epad
+[\fIOPTION\fR] [\fIFILEPATH\fR]
+.SH DESCRIPTION
+.HP \w'\fBepad\fR\ 'u
+\fBepad\fR is a simple text editor written in Elementary and Python. It
+aims to be a leafpad replace for the enlightenment desktop.
+.SH OPTIONS
+.B epad
+invoked with no options simply opens an untitled and empty text
+document. epad invoked with incorrect options prints usage information.
+The most common usage of epad is:
+.RS 2
+
+\fB epad FILEPATH\fR which opens the text file given by FILEPATH if it
+exists, otherwise it opens an empty file with the name given by the file
+name in FILEPATH and at the location set by the file path in FILEPATH.
+.RE
+
+The following other options are also used by epad:
+
+.RS 2
+\fB -h\fR,\fB --help\fR
+.RS 2
+Prints help
+.RE
+
+\fB -v\fR,\fB--version\fR
+.RS 2
+Print the version number
+.RE
+.RE
+
+.SH FILES
+None
+
+.SH ENVIRONMENT
+.PP
+ePad uses the default Elementary theme to provide the look of all widgets.
+End users can change the theme used by Elementary by setting the 
+\fBELM_THEME\fR environment variable before running an application, or 
+globally for all programs using the \fBelementary_config\fR utility. 
+
+.SH COPYRIGHT
+Copyright \(co 2014 Bodhi Linux
+
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+\fB nano\fR(1), \fB vi\fR(1), \fB leafpad\fR(1)
+.SH BUGS
+Report epad bugs to https://github.com/JeffHoogland/ePad/issues
+
+.SH AUTHORS
+
+\fB Jeff Hoogland\fR (JeffHoogland@Linux.com)
+\fB Robert Wiley\fR (ylee@bodhilinux.com)
+\fB Kai Huuhko\fR (kai.huuhko@gmail.com)
+
+This manual page was written by Robert Wiley
