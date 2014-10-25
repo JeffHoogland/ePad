@@ -99,6 +99,7 @@ class Interface(object):
         self.mainBox.show()
 
         self.mainTb = ePadToolbar(self, self.mainWindow)
+        self.mainTb.focus_allow = 0
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
 
@@ -168,7 +169,7 @@ class Interface(object):
             self.line_label.show()
             self.mainBox.pack_end(self.line_label)
         # self.mainEn.markup_filter_append(self.textFilter)
-        
+
         self.mainEn.show()
         self.mainEn.focus_set(1)
         try:
@@ -224,7 +225,7 @@ class Interface(object):
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
-                                          
+
                 self.mainEn.focus_set(1)
 
     def newFile(self, obj=None, ignoreSave=False):
@@ -246,7 +247,7 @@ class Interface(object):
             self.mainEn.delete()
             self.entryInit()
             self.isNewFile = True
-            
+
         elif self.confirmPopup is None:
             self.confirmSave(self.newFile)
         self.mainEn.focus_set(1)
