@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.7"
+__version__ = "0.5.7-2"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -37,11 +37,16 @@ import time
 try:
     from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
     from efl import elementary
-    from efl.elementary.window import StandardWindow
+    from efl.elementary.window import StandardWindow, Window
+    from efl.elementary.window import ELM_WIN_DIALOG_BASIC
+    from efl.elementary.background import Background
     from efl.elementary.box import Box
     from efl.elementary.button import Button
     from efl.elementary.label import Label
     from efl.elementary.icon import Icon
+    from efl.elementary.need import need_ethumb
+    from efl.elementary.separator import Separator
+    from efl.elementary.image import Image
     from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
         markup_to_utf8
     from efl.elementary.popup import Popup
@@ -64,11 +69,13 @@ except ImportError:
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
+EXPAND_NONE = 0.0, 0.0
 FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
 FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
-WORD_WRAP = False
+PADDING = 15, 0
+WORD_WRAP = True
 SHOW_POS = True
 
 
@@ -95,6 +102,8 @@ class Interface(object):
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
 
+        self.about = aboutWin(self, self.mainWindow)
+        self.about.hide()
         # Initialize Text entry box and line label
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
@@ -302,6 +311,9 @@ class Interface(object):
         self.confirmPopup.delete()
         self.confirmPopup = None
 
+    def showAbout(self):
+        self.about.launch()
+
     def closeApp(self, obj=False, trash=False):
         elementary.exit()
 
@@ -379,10 +391,12 @@ class ePadToolbar(Toolbar):
         it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
         chk = Check(canvas, disabled=True)
         it.content = chk
+        it.content.state = WORD_WRAP
 
         # ---------------------------
 
-        self.item_append("dialog-information", "About", self.aboutPress)
+        self.item_append("dialog-information", "About",
+                         lambda self, obj: self._parent.showAbout())
 
     def optionsWWPress(self, obj, it):
         wordwrap = self._parent.mainEn.line_wrap
@@ -404,23 +418,115 @@ class ePadToolbar(Toolbar):
     def selectAllPress(self, obj, it):
         self._parent.mainEn.select_all()
 
-    def aboutPress(self, obj, it):
+
+class aboutWin(Window):
+    def __init__(self, parent, canvas):
+
+        self._parent = parent
+        self._canvas = canvas
+        # Dialog Window Basics
+        self.aboutDialog = Window("epad", ELM_WIN_DIALOG_BASIC)
+        #
+        self.aboutDialog.callback_delete_request_add(self.closeabout)
+        #    Set Dialog background
+        background = Background(self.aboutDialog, size_hint_weight=EXPAND_BOTH)
+        self.aboutDialog.resize_object_add(background)
+        background.show()
+        #
+        mainBox = Box(self.aboutDialog, size_hint_weight=EXPAND_BOTH,
+                      size_hint_align=FILL_BOTH)
+        self.aboutDialog.resize_object_add(mainBox)
+        mainBox.show()
+        #
+        need_ethumb()
+        icon = Icon(self.aboutDialog, thumb='True')
+        icon.standard_set('accessories-text-editor')
+        aboutImage = Image(self.aboutDialog, no_scale=1,
+                           size_hint_weight=EXPAND_BOTH,
+                           size_hint_align=FILL_BOTH,
+                           file=icon.file_get())
+        aboutImage.aspect_fixed_set(0)
+
+        mainBox.pack_end(aboutImage)
+        aboutImage.show()
+
+        labelBox = Box(self.aboutDialog, size_hint_weight=EXPAND_NONE)
+        mainBox.pack_end(labelBox)
+        labelBox.show()
+        #    Entry to hold text
+        titleStr = '<br>ePad version <em>{0}</em><br>'.format(__version__)
+        aboutStr = ('<br>A simple text editor written in <br>'
+                    'python and elementary<br>')
+        aboutLbTitle = Label(self.aboutDialog, style='marker')
+        aboutLbTitle.text = titleStr
+        aboutLbTitle.show()
+
+        labelBox.pack_end(aboutLbTitle)
+
+        sep = Separator(self.aboutDialog, horizontal=True)
+        labelBox.pack_end(sep)
+        sep.show()
+
+        aboutText = Label(self.aboutDialog)
+        aboutText.text = aboutStr
+
+        aboutText.show()
+        labelBox.pack_end(aboutText)
+
+        aboutCopyright = Label(self.aboutDialog)
+        aboutCopyright.text = '<b>Copyright</b> © <i>2014 Bodhi Linux</i><br>'
+
+        aboutCopyright.show()
+        labelBox.pack_end(aboutCopyright)
+
+        # Dialog Buttons
+        #    Horizontal Box for Dialog Buttons
+        buttonBox = Box(self.aboutDialog, horizontal=True,
+                        size_hint_weight=EXPAND_HORIZ,
+                        size_hint_align=FILL_BOTH, padding=PADDING)
+        buttonBox.size_hint_weight_set(EVAS_HINT_EXPAND, 0.0)
+        buttonBox.show()
+        labelBox.pack_end(buttonBox)
+        #    Credits Button
+        cancelBtn = Button(self.aboutDialog, text="Credits ",
+                           size_hint_weight=EXPAND_NONE)
+        cancelBtn.callback_clicked_add(self.creditsPress)
+        cancelBtn.show()
+        buttonBox.pack_end(cancelBtn)
+        #    Close Button
+        okBtn = Button(self.aboutDialog, text=" Close ",
+                       size_hint_weight=EXPAND_NONE)
+        okBtn.callback_clicked_add(self.closeabout)
+        okBtn.show()
+        buttonBox.pack_end(okBtn)
+
+        # Ensure the min height
+        self.aboutDialog.resize(300, 100)
+
+    def creditsPress(self, obj):
         # About popup
-        self.popupAbout = Popup(self._canvas, size_hint_weight=EXPAND_BOTH)
-        self.popupAbout.part_text_set("title,text",
-                                      "ePad version {0}".format(__version__))
+        self.popupAbout = Popup(self.aboutDialog,
+                                size_hint_weight=EXPAND_BOTH)
+
         self.popupAbout.text = (
-            "A simple text editor written in "
-            "python and elementary<br><br> "
-            "By: Jeff Hoogland"
+            "Jeff Hoogland &lt;<i>Jef91</i>&gt;<br><br>"
+            "Robert Wiley &lt;<i>ylee</i>&gt;<br><br>"
+            "Kai Huuhko &lt;<i>kuuko</i>&gt;<br>"
             )
-        bt = Button(self._canvas, text="Done")
-        bt.callback_clicked_add(self.aboutClose)
-        self.popupAbout.part_content_set("button1", bt)
+
+        self.popupAbout.callback_block_clicked_add(self.cb_bnt_close)
         self.popupAbout.show()
 
-    def aboutClose(self, bt):
+    def cb_bnt_close(self, btn):
         self.popupAbout.delete()
+
+    def closeabout(self, obj=False, trash=False):
+        self.aboutDialog.hide()
+
+    def launch(self, startingFile=False):
+        center = self._parent.mainWindow.center_get()
+        self.aboutDialog.center_set(center[0], center[1])
+        self.aboutDialog.show()
 
 
 if __name__ == "__main__":
