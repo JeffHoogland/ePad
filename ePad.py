@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.7-2"
+__version__ = "0.5.8"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -99,7 +99,7 @@ class Interface(object):
         self.mainBox.show()
 
         self.mainTb = ePadToolbar(self, self.mainWindow)
-        self.mainTb.focus_allow = 0
+        self.mainTb.focus_allow = False
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
 
@@ -171,7 +171,7 @@ class Interface(object):
         # self.mainEn.markup_filter_append(self.textFilter)
 
         self.mainEn.show()
-        self.mainEn.focus_set(1)
+        self.mainEn.focus_set(True)
         try:
             self.mainBox.pack_before(self.mainEn, self.line_label)
         except AttributeError:
@@ -226,7 +226,7 @@ class Interface(object):
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
 
-                self.mainEn.focus_set(1)
+                self.mainEn.focus_set(True)
 
     def newFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
@@ -250,7 +250,7 @@ class Interface(object):
 
         elif self.confirmPopup is None:
             self.confirmSave(self.newFile)
-        self.mainEn.focus_set(1)
+        self.mainEn.focus_set(True)
 
     def openFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
@@ -334,6 +334,8 @@ class Interface(object):
                 self.saveFile()
             elif event.key.lower() == "o":
                 self.openFile()
+            elif event.key.lower() == "q":
+                self.closeChecks(self.mainWindow)
 
     # Legacy hack no longer needed
     #  there was an issue in elementary entry where it would
@@ -557,7 +559,7 @@ if __name__ == "__main__":
     if ourFile:
         if ourFile[0:7] == "file://":
             print(ourFile)
-            ourFile = ourFile[7:-1]
+            ourFile = ourFile[7:]
         print(ourFile)
         GUI.launch(ourFile)
     else:
