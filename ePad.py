@@ -308,8 +308,10 @@ class Interface(object):
             self.isSaved = True
 
     def closeChecks(self, obj):
-        print(self.isSaved)
-        if self.isSaved is False and self.confirmPopup is None:
+        print("File is Saved: ", self.isSaved)
+        if not self.flip.front_visible_get():
+            self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
+        elif self.isSaved is False and self.confirmPopup is None:
             self.confirmSave(self.closeApp)
         else:
             self.closeApp()
