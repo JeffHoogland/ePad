@@ -144,6 +144,16 @@ class Interface(object):
         self.isNewFile = False
         self.confirmPopup = None
 
+    def folderError(self, filePath):
+        errorPopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
+        current_file = \
+            os.path.basename(filePath)
+        errorMsg = "<b>'%s'</b> is a folder.<br><br>Operation failed !!!" \
+                   % (current_file)
+        errorPopup.text = errorMsg
+        errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
+        errorPopup.show()
+
     def entryInit(self):
         self.mainEn = Entry(self.mainWindow, scrollable=True,
                             line_wrap=self.wordwrap, autosave=False,
@@ -206,7 +216,13 @@ class Interface(object):
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
-                newfile = open(file_selected, 'w')
+                try:
+                    newfile = open(file_selected, 'w')
+                except IOError, msg:
+                    print("ERROR: {0}".format(msg))
+                    if os.path.isdir(file_selected):
+                        self.folderError(file_selected)
+                    return
                 tmp_text = self.mainEn.entry_get()
                 newfile.write(tmp_text)
                 newfile.close()
@@ -221,7 +237,12 @@ class Interface(object):
                 try:
                     self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
-                except RuntimeError:
+                except RuntimeError, msg:
+
+                    if os.path.isdir(file_selected):
+                        print("ERROR: {0}: {1}".format(msg, file_selected))
+                        self.folderError(file_selected)
+                        return
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
@@ -499,11 +520,11 @@ class aboutWin(Window):
         buttonBox.show()
         labelBox.pack_end(buttonBox)
         #    Credits Button
-        cancelBtn = Button(self.aboutDialog, text="Credits ",
-                           size_hint_weight=EXPAND_NONE)
-        cancelBtn.callback_clicked_add(self.creditsPress)
-        cancelBtn.show()
-        buttonBox.pack_end(cancelBtn)
+        creditsBtn = Button(self.aboutDialog, text="Credits ",
+                            size_hint_weight=EXPAND_NONE)
+        creditsBtn.callback_clicked_add(self.creditsPress)
+        creditsBtn.show()
+        buttonBox.pack_end(creditsBtn)
         #    Close Button
         okBtn = Button(self.aboutDialog, text=" Close ",
                        size_hint_weight=EXPAND_NONE)
