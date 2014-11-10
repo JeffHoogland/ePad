@@ -45,6 +45,7 @@ try:
     from efl.elementary.label import Label
     from efl.elementary.icon import Icon
     from efl.elementary.need import need_ethumb
+    from efl.elementary.notify import Notify, ELM_NOTIFY_ALIGN_FILL
     from efl.elementary.separator import Separator
     from efl.elementary.image import Image
     from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
@@ -75,8 +76,10 @@ FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
 PADDING = 15, 0
+# User options
 WORD_WRAP = True
 SHOW_POS = True
+NOTIFY_ROOT = True
 
 
 class Interface(object):
@@ -102,7 +105,20 @@ class Interface(object):
         self.mainTb.focus_allow = False
         self.mainTb.show()
         self.mainBox.pack_end(self.mainTb)
-
+        # Root User Notification
+        if os.geteuid() == 0:
+            printErr("Caution: Root User")
+            if NOTIFY_ROOT:
+                notifyBox = Box(self.mainWindow, horizontal=True)
+                notifyBox.show()
+                notify = Notify(self.mainWindow, size_hint_weight=EXPAND_BOTH,
+                                align=(ELM_NOTIFY_ALIGN_FILL, 0.0),
+                                content=notifyBox)
+                notifyLabel = Label(self.mainWindow)
+                notifyLabel.text = "<b><i>Root User</i></b>"
+                notifyBox.pack_end(notifyLabel)
+                notifyLabel.show()
+                self.mainBox.pack_end(notifyBox)
         self.about = aboutWin(self, self.mainWindow)
         self.about.hide()
         # Initialize Text entry box and line label
@@ -473,14 +489,26 @@ class aboutWin(Window):
         need_ethumb()
         icon = Icon(self.aboutDialog, thumb='True')
         icon.standard_set('accessories-text-editor')
-        aboutImage = Image(self.aboutDialog, no_scale=1,
-                           size_hint_weight=EXPAND_BOTH,
-                           size_hint_align=FILL_BOTH,
-                           file=icon.file_get())
-        aboutImage.aspect_fixed_set(0)
 
-        mainBox.pack_end(aboutImage)
-        aboutImage.show()
+        # Using gksudo or sudo fails to load Image here
+        #   unless options specify using preserving their existing environment.
+        #   may also fail to load other icons but does not raise an exception
+        #   in that situation.
+        # Works fine using eSudo as a gksudo alternative,
+        #   other alternatives not tested
+        try:
+            aboutImage = Image(self.aboutDialog, no_scale=1,
+                               size_hint_weight=EXPAND_BOTH,
+                               size_hint_align=FILL_BOTH,
+                               file=icon.file_get())
+            aboutImage.aspect_fixed_set(0)
+
+            mainBox.pack_end(aboutImage)
+            aboutImage.show()
+        except RuntimeError, msg:
+            print("Warning: to run as root please use:\n"
+                  "\t gksudo -k or sudo -E \n"
+                  "Continuing with minor errors ...")
 
         labelBox = Box(self.aboutDialog, size_hint_weight=EXPAND_NONE)
         mainBox.pack_end(labelBox)
