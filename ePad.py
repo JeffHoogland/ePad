@@ -34,6 +34,7 @@ def printErr(*objs):
 import sys
 import os
 import time
+import urllib
 try:
     from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
     from efl import elementary
@@ -610,7 +611,7 @@ if __name__ == "__main__":
     if ourFile:
         if ourFile[0:7] == "file://":
             print(ourFile)
-            ourFile = ourFile[7:]
+            ourFile = urllib.url2pathname(ourFile[7:])
         print(ourFile)
         GUI.launch(ourFile)
     else:
