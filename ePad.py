@@ -171,6 +171,16 @@ class Interface(object):
         errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
         errorPopup.show()
 
+    def pathError(self, filePath):
+        errorPopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
+        current_file = \
+            os.path.basename(filePath)
+        errorMsg = "<b>'%s'</b> is an Invalid path.<br><br>Open failed !!!" \
+                   % (filePath)
+        errorPopup.text = errorMsg
+        errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
+        errorPopup.show()
+
     def entryInit(self):
         self.mainEn = Entry(self.mainWindow, scrollable=True,
                             line_wrap=self.wordwrap, autosave=False,
@@ -229,7 +239,7 @@ class Interface(object):
     def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
-        print(file_selected)
+        print("File Selected: '{0}'".format(file_selected))
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
@@ -392,9 +402,12 @@ class Interface(object):
     #        return theText
 
     def launch(self, startingFile=False):
-        if startingFile:
+        if startingFile and os.path.isdir(os.path.dirname(startingFile)):
             self.fileSelected(self.fileSelector, startingFile, True)
         self.mainWindow.show()
+        if not os.path.isdir(os.path.dirname(startingFile)):
+            print("Error: {0} is an Invalid Path".format(startingFile))
+            self.pathError(startingFile)
 
 
 class ePadToolbar(Toolbar):
@@ -610,9 +623,15 @@ if __name__ == "__main__":
     GUI = Interface()
     if ourFile:
         if ourFile[0:7] == "file://":
-            print(ourFile)
-            ourFile = urllib.url2pathname(ourFile[7:])
-        print(ourFile)
+            # print(ourFile)
+            try:
+                ourFile = urllib.url2pathname(ourFile[7:])
+            except AttributeError:
+                # Python3
+                import urllib.request
+                ourFile = urllib.request.url2pathname(ourFile[7:])
+
+        print("Opening file: '{0}'".format(ourFile))
         GUI.launch(ourFile)
     else:
         GUI.launch()
