@@ -28,9 +28,6 @@ __source__ = 'Source code and bug reports: {0}'.format(__github__)
 PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
 
 
-def printErr(*objs):
-    print(*objs, file=sys.stderr)
-
 import sys
 import os
 import time
@@ -81,6 +78,17 @@ PADDING = 15, 0
 WORD_WRAP = True
 SHOW_POS = True
 NOTIFY_ROOT = True
+
+
+def printErr(*objs):
+    print(*objs, file=sys.stderr)
+
+
+def errorPopup(window, errorMsg):
+    errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
+    errorPopup.text = errorMsg
+    errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
+    errorPopup.show()
 
 
 class Interface(object):
@@ -161,26 +169,6 @@ class Interface(object):
         self.isNewFile = False
         self.confirmPopup = None
 
-    def folderError(self, filePath):
-        errorPopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
-        current_file = \
-            os.path.basename(filePath)
-        errorMsg = "<b>'%s'</b> is a folder.<br><br>Operation failed !!!" \
-                   % (current_file)
-        errorPopup.text = errorMsg
-        errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
-        errorPopup.show()
-
-    def pathError(self, filePath):
-        errorPopup = Popup(self.mainWindow, size_hint_weight=EXPAND_BOTH)
-        current_file = \
-            os.path.basename(filePath)
-        errorMsg = "<b>'%s'</b> is an Invalid path.<br><br>Open failed !!!" \
-                   % (filePath)
-        errorPopup.text = errorMsg
-        errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
-        errorPopup.show()
-
     def entryInit(self):
         self.mainEn = Entry(self.mainWindow, scrollable=True,
                             line_wrap=self.wordwrap, autosave=False,
@@ -248,7 +236,11 @@ class Interface(object):
                 except IOError, msg:
                     print("ERROR: {0}".format(msg))
                     if os.path.isdir(file_selected):
-                        self.folderError(file_selected)
+                        current_file = os.path.basename(file_selected)
+                        errorMsg = ("<b>'%s'</b> is a folder."
+                                    "<br><br>Operation failed !!!"
+                                    % (current_file))
+                        errorPopup(self.mainWindow, errorMsg)
                     return
                 tmp_text = self.mainEn.entry_get()
                 newfile.write(tmp_text)
@@ -268,7 +260,11 @@ class Interface(object):
 
                     if os.path.isdir(file_selected):
                         print("ERROR: {0}: {1}".format(msg, file_selected))
-                        self.folderError(file_selected)
+                        current_file = os.path.basename(file_selected)
+                        errorMsg = ("<b>'%s'</b> is a folder."
+                                    "<br><br>Operation failed !!!"
+                                    % (current_file))
+                        errorPopup(self.mainWindow, errorMsg)
                         return
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad"
@@ -410,7 +406,9 @@ class Interface(object):
         try:
             if not os.path.isdir(os.path.dirname(startingFile)):
                 print("Error: {0} is an Invalid Path".format(startingFile))
-                self.pathError(startingFile)
+                errorMsg = ("<b>'%s'</b> is an Invalid path."
+                            "<br><br>Open failed !!!" % (startingFile))
+                errorPopup(self.mainWindow, errorMsg)
         except AttributeError:
             pass
 
