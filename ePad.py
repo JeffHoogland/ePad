@@ -28,6 +28,7 @@ __source__ = 'Source code and bug reports: {0}'.format(__github__)
 PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
 
 
+import errno
 import sys
 import os
 import time
@@ -233,16 +234,28 @@ class Interface(object):
             if IsSave:
                 try:
                     newfile = open(file_selected, 'w')
-                except IOError, msg:
-                    print("ERROR: {0}".format(msg))
-                    if os.path.isdir(file_selected):
+                except IOError as err:
+                    print("ERROR: {0}: '{1}'".format(err.strerror,
+                                                     file_selected))
+                    if err.errno == errno.EISDIR:
                         current_file = os.path.basename(file_selected)
                         errorMsg = ("<b>'%s'</b> is a folder."
                                     "<br><br>Operation failed !!!"
                                     % (current_file))
                         errorPopup(self.mainWindow, errorMsg)
+                    elif err.errno == errno.EACCES:
+                        errorMsg = ("Permision denied: <b>'%s'</b>."
+                                    "<br><br>Operation failed !!!"
+                                    % (file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    else:
+                        errorMsg = ("ERROR: %s: '%s'"
+                                    "<br><br>Operation failed !!!"
+                                    % (err.strerror, file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
                     return
                 tmp_text = self.mainEn.entry_get()
+                # FIXME: Why save twice?
                 newfile.write(tmp_text)
                 newfile.close()
                 self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
@@ -257,7 +270,6 @@ class Interface(object):
                     self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
                 except RuntimeError, msg:
-
                     if os.path.isdir(file_selected):
                         print("ERROR: {0}: {1}".format(msg, file_selected))
                         current_file = os.path.basename(file_selected)
@@ -346,6 +358,24 @@ class Interface(object):
         if self.mainEn.file_get()[0] is None or self.isNewFile:
             self.saveAs()
         else:
+            file_selected = self.mainEn.file_get()[0]
+            # Detect save errors as entry.file_save currently returns no errors
+            #   even in the case where the file fails to save :(
+            try:
+                newfile = open(file_selected, 'w')
+            except IOError as err:
+                if err.errno == errno.EACCES:
+                    errorMsg = ("Permision denied: <b>'%s'</b>."
+                                "<br><br>Operation failed !!!"
+                                % (file_selected))
+                    errorPopup(self.mainWindow, errorMsg)
+                else:
+                    errorMsg = ("ERROR: %s: '%s'"
+                                "<br><br>Operation failed !!!"
+                                % (err.strerror, file_selected))
+                    errorPopup(self.mainWindow, errorMsg)
+                return
+            newfile.close()
             self.mainEn.file_save()
             self.mainWindow.title_set("%s - ePad"
                                       % os.path.basename(self.mainEn.file[0]))
