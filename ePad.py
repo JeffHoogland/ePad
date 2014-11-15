@@ -402,12 +402,17 @@ class Interface(object):
     #        return theText
 
     def launch(self, startingFile=False):
-        if startingFile and os.path.isdir(os.path.dirname(startingFile)):
-            self.fileSelected(self.fileSelector, startingFile, True)
+        if startingFile:
+            if os.path.isdir(os.path.dirname(startingFile)):
+                self.fileSelected(self.fileSelector, startingFile, True)
         self.mainWindow.show()
-        if not os.path.isdir(os.path.dirname(startingFile)):
-            print("Error: {0} is an Invalid Path".format(startingFile))
-            self.pathError(startingFile)
+        # if startingFile is False this test fails with error
+        try:
+            if not os.path.isdir(os.path.dirname(startingFile)):
+                print("Error: {0} is an Invalid Path".format(startingFile))
+                self.pathError(startingFile)
+        except AttributeError:
+            pass
 
 
 class ePadToolbar(Toolbar):
