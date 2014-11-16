@@ -33,18 +33,16 @@ epad \- a python-efl  based simple text editor
 .SH DESCRIPTION
 .HP \w'\fBepad\fR\ 'u
 \fBepad\fR is a simple text editor written in Elementary and Python. It
-aims to be a leafpad replace for the enlightenment desktop.
+aims to be a leafpad replace for the Enlightenment desktop.
 .SH OPTIONS
 .B epad
 invoked with no options simply opens an untitled and empty text
 document. epad invoked with incorrect options prints usage information.
 The most common usage of epad is:
-.RS 2
 
-\fB epad FILEPATH\fR which opens the text file given by FILEPATH if it
+\fBepad FILEPATH\fR which opens the text file given by FILEPATH if it
 exists, otherwise it opens an empty file with the name given by the file
 name in FILEPATH and at the location set by the file path in FILEPATH.
-.RE
 
 The following other options are also used by epad:
 
@@ -61,14 +59,48 @@ Print the version number
 .RE
 
 .SH FILES
-None
+.PP
+ePad uses the files present in \fB~/.elementary\fR to determine the elementary
+configuration and access icons and fonts. If elementary is properly installed
+this hidden folder should be present for all non-root users. Without the files
+in this folder ePad may fail to display icons properly but should otherwsie
+function properly.
+
+.PP
+If you need to run ePad as root and do not have a root user, see the \fBNote\fR
+below.
 
 .SH ENVIRONMENT
 .PP
 ePad uses the default Elementary theme to provide the look of all widgets.
-End users can change the theme used by Elementary by setting the 
-\fBELM_THEME\fR environment variable before running an application, or 
-globally for all programs using the \fBelementary_config\fR utility. 
+End users can change the theme used by Elementary by setting the
+\fBELM_THEME\fR environment variable before running an application, or
+globally for all programs using the \fBelementary_config\fR utility.
+
+.SH NOTES
+.PP
+To run as root please use:
+.RS 2
+
+\fBgksudo -k epad\fR or
+
+\fBsudo -E epad\fR
+.RE
+.PP
+Bodhi Linux users can run simply:
+.RS 2
+
+ \fBgksudo epad\fR
+
+.RE
+
+as gksudo is implemented by eSudo.
+
+.SH BUGS
+Report epad bugs to https://github.com/JeffHoogland/ePad/issues
+
+.SH SEE ALSO
+\fB nano\fR(1), \fB vi\fR(1), \fB leafpad\fR(1)
 
 .SH COPYRIGHT
 Copyright \(co 2014 Bodhi Linux
@@ -77,10 +109,6 @@ License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
 
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
-.SH SEE ALSO
-\fB nano\fR(1), \fB vi\fR(1), \fB leafpad\fR(1)
-.SH BUGS
-Report epad bugs to https://github.com/JeffHoogland/ePad/issues
 
 .SH AUTHORS
 
