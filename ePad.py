@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.8"
+__version__ = "0.5.8-1"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -79,6 +79,7 @@ PADDING = 15, 0
 WORD_WRAP = True
 SHOW_POS = True
 NOTIFY_ROOT = True
+SHOW_HIDDEN = False
 
 
 def printErr(*objs):
@@ -90,6 +91,18 @@ def errorPopup(window, errorMsg):
     errorPopup.text = errorMsg
     errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
     errorPopup.show()
+
+
+def toggleHidden(fileSelector):
+    if not hasattr(toggleHidden, 'count'):
+        toggleHidden.count = 0
+    if toggleHidden.count == 1:
+        showHidden = fileSelector.hidden_visible_get()
+        fileSelector.hidden_visible_set(not showHidden)
+        SHOW_HIDDEN = not showHidden
+    # Modulo 4 Hack because this function is called
+    #   four times each time Ctrl-h is pressed
+    toggleHidden.count = (toggleHidden.count + 1) % 4
 
 
 class Interface(object):
@@ -148,10 +161,12 @@ class Interface(object):
 
         self.fileSelector = Fileselector(self.mainWindow, is_save=False,
                                          expandable=False, folder_only=False,
+                                         hidden_visible=SHOW_HIDDEN,
                                          path=os.getenv("HOME"),
                                          size_hint_weight=EXPAND_BOTH,
                                          size_hint_align=FILL_BOTH)
         self.fileSelector.callback_done_add(self.fileSelected)
+
         self.fileSelector.show()
 
         self.fileBox.pack_end(self.fileLabel)
@@ -410,6 +425,9 @@ class Interface(object):
                 self.saveFile()
             elif event.key.lower() == "o":
                 self.openFile()
+            elif event.key.lower() == "h":
+                if not self.flip.front_visible_get():
+                    toggleHidden(self.fileSelector)
             elif event.key.lower() == "q":
                 self.closeChecks(self.mainWindow)
 
