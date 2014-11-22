@@ -244,6 +244,8 @@ class Interface(object):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
         print("File Selected: '{0}'".format(file_selected))
+        if file_selected:
+            print("Does file exist", os.path.exists(file_selected))
         IsSave = fs.is_save_get()
         if file_selected:
             if IsSave:
@@ -273,9 +275,17 @@ class Interface(object):
                 # FIXME: Why save twice?
                 newfile.write(tmp_text)
                 newfile.close()
-                self.mainEn.file_set(file_selected, ELM_TEXT_FORMAT_PLAIN_UTF8)
+                try:
+                    # file_set fails on empty file
+                    self.mainEn.file_set(file_selected,
+                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
+
+                except RuntimeError:
+                    print("Saving empty file: '%s'" % file_selected)
                 self.mainEn.entry_set(tmp_text)
-                self.mainEn.file_save()
+                # if empty file entry.file_save destroys file :(
+                if len(tmp_text):
+                    self.mainEn.file_save()
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
                 self.isSaved = True
