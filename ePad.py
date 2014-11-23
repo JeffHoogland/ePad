@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.8-1"
+__version__ = "0.5.8-2"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -184,6 +184,7 @@ class Interface(object):
         self.isSaved = True
         self.isNewFile = False
         self.confirmPopup = None
+        self.fileExistsFlag = False
 
     def entryInit(self):
         self.mainEn = Entry(self.mainWindow, scrollable=True,
@@ -239,75 +240,6 @@ class Interface(object):
             "Untitled"
         self.mainWindow.title = "*%s - ePad" % (current_file)
         self.isSaved = False
-
-    def fileSelected(self, fs, file_selected, onStartup=False):
-        if not onStartup:
-            self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
-        print("File Selected: '{0}'".format(file_selected))
-        if file_selected:
-            print("Does file exist", os.path.exists(file_selected))
-        IsSave = fs.is_save_get()
-        if file_selected:
-            if IsSave:
-                try:
-                    newfile = open(file_selected, 'w')
-                except IOError as err:
-                    print("ERROR: {0}: '{1}'".format(err.strerror,
-                                                     file_selected))
-                    if err.errno == errno.EISDIR:
-                        current_file = os.path.basename(file_selected)
-                        errorMsg = ("<b>'%s'</b> is a folder."
-                                    "<br><br>Operation failed !!!"
-                                    % (current_file))
-                        errorPopup(self.mainWindow, errorMsg)
-                    elif err.errno == errno.EACCES:
-                        errorMsg = ("Permision denied: <b>'%s'</b>."
-                                    "<br><br>Operation failed !!!"
-                                    % (file_selected))
-                        errorPopup(self.mainWindow, errorMsg)
-                    else:
-                        errorMsg = ("ERROR: %s: '%s'"
-                                    "<br><br>Operation failed !!!"
-                                    % (err.strerror, file_selected))
-                        errorPopup(self.mainWindow, errorMsg)
-                    return
-                tmp_text = self.mainEn.entry_get()
-                # FIXME: Why save twice?
-                newfile.write(tmp_text)
-                newfile.close()
-                try:
-                    # file_set fails on empty file
-                    self.mainEn.file_set(file_selected,
-                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
-
-                except RuntimeError:
-                    print("Saving empty file: '%s'" % file_selected)
-                self.mainEn.entry_set(tmp_text)
-                # if empty file entry.file_save destroys file :(
-                if len(tmp_text):
-                    self.mainEn.file_save()
-                self.mainWindow.title_set("%s - ePad"
-                                          % os.path.basename(file_selected))
-                self.isSaved = True
-                self.isNewFile = False
-            else:
-                try:
-                    self.mainEn.file_set(file_selected,
-                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
-                except RuntimeError, msg:
-                    if os.path.isdir(file_selected):
-                        print("ERROR: {0}: {1}".format(msg, file_selected))
-                        current_file = os.path.basename(file_selected)
-                        errorMsg = ("<b>'%s'</b> is a folder."
-                                    "<br><br>Operation failed !!!"
-                                    % (current_file))
-                        errorPopup(self.mainWindow, errorMsg)
-                        return
-                    print("Empty file: {0}".format(file_selected))
-                self.mainWindow.title_set("%s - ePad"
-                                          % os.path.basename(file_selected))
-
-                self.mainEn.focus_set(True)
 
     def newFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
@@ -405,6 +337,145 @@ class Interface(object):
             self.mainWindow.title_set("%s - ePad"
                                       % os.path.basename(self.mainEn.file[0]))
             self.isSaved = True
+
+    def doSelected(self, obj):
+
+        # Something I should avoid but here I prefer a polymorphic function
+        if isinstance(obj, Button):
+            file_selected = self.fileSelector.selected_get()
+        else:
+            file_selected = obj
+
+        IsSave = self.fileSelector.is_save_get()
+        if file_selected:
+            if IsSave:
+                try:
+                    newfile = open(file_selected, 'w')
+                except IOError as err:
+                    print("ERROR: {0}: '{1}'".format(err.strerror,
+                                                     file_selected))
+                    if err.errno == errno.EACCES:
+                        errorMsg = ("Permision denied: <b>'%s'</b>."
+                                    "<br><br>Operation failed !!!"
+                                    % (file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    else:
+                        errorMsg = ("ERROR: %s: '%s'"
+                                    "<br><br>Operation failed !!!"
+                                    % (err.strerror, file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    return
+                tmp_text = self.mainEn.entry_get()
+                # FIXME: Why save twice?
+                newfile.write(tmp_text)
+                newfile.close()
+                # Suppress error message when empty file is saved
+                try:
+                    self.mainEn.file_set(file_selected,
+                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
+                except RuntimeError:
+                    print("Empty file saved:{0}".format(file_selected))
+                self.mainEn.entry_set(tmp_text)
+                # if empty file entry.file_save destroys file :(
+                if len(tmp_text):
+                    self.mainEn.file_save()
+                self.mainWindow.title_set("%s - ePad"
+                                          % os.path.basename(file_selected))
+                self.isSaved = True
+                self.isNewFile = False
+            else:
+                if os.path.isdir(file_selected):
+                    print("ERROR: {0}: is a directory. "
+                          "Could not set file.".format(file_selected))
+                    current_file = os.path.basename(file_selected)
+                    errorMsg = ("<b>'%s'</b> is a folder."
+                                "<br><br>Operation failed !!!"
+                                % (current_file))
+                    errorPopup(self.mainWindow, errorMsg)
+                    return
+                # Test to see if file can be opened to catch permission errors
+                #   as entry.file_set function does not differentiate
+                #   different possible errors.
+                try:
+                    with open(file_selected) as f:
+                        tmp_text = f.readline()
+                except IOError as err:
+                    # Fixme: Duplicated code 
+                    print("ERROR: {0}: '{1}'".format(err.strerror,
+                                                     file_selected))
+                    if err.errno == errno.EACCES:
+                        errorMsg = ("Permision denied: <b>'%s'</b>."
+                                    "<br><br>Operation failed !!!"
+                                    % (file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    else:
+                        errorMsg = ("ERROR: %s: '%s'"
+                                    "<br><br>Operation failed !!!"
+                                    % (err.strerror, file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    return
+                try:
+                    self.mainEn.file_set(file_selected,
+                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
+                except RuntimeError, msg:
+                    # Entry.file_set fails on empty files
+                    print("Empty file: {0}".format(file_selected))
+                self.mainWindow.title_set("%s - ePad"
+                                          % os.path.basename(file_selected))
+
+                self.mainEn.focus_set(True)
+
+
+    def fileExists(self, filePath):
+
+        self.confirmPopup = Popup(self.mainWindow,
+                                  size_hint_weight=EXPAND_BOTH)
+        current_file = \
+            os.path.basename(filePath)
+        self.confirmPopup.text = "'%s' already exists. Overwrite?" \
+                                 % (current_file)
+        # Close without saving button
+        no_btt = Button(self.mainWindow)
+        no_btt.text = "No"
+        no_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
+        no_btt.show()
+        # cancel close request
+        cancel_btt = Button(self.mainWindow)
+        cancel_btt.text = "Cancel"
+        cancel_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
+        cancel_btt.show()
+        # Save the file and then close button
+        sav_btt = Button(self.mainWindow)
+        sav_btt.text = "Yes"
+        sav_btt.callback_clicked_add(self.doSelected)
+        sav_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
+        sav_btt.show()
+
+        # add buttons to popup
+        self.confirmPopup.part_content_set("button1", no_btt)
+        self.confirmPopup.part_content_set("button3", sav_btt)
+        self.confirmPopup.show()
+
+    def fileSelected(self, fs, file_selected, onStartup=False):
+        if not onStartup:
+            self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
+        print("File Selected: {0}".format(file_selected))
+        IsSave = fs.is_save_get()
+
+        if file_selected:
+            if IsSave:
+                if os.path.isdir(file_selected):
+                    current_file = os.path.basename(file_selected)
+                    errorMsg = ("<b>'%s'</b> is a folder."
+                                "<br><br>Operation failed !!!"
+                                % (current_file))
+                    errorPopup(self.mainWindow, errorMsg)
+                    return
+                elif os.path.exists(file_selected):
+                    self.fileExistsFlag = True
+                    self.fileExists(file_selected)
+                    return
+        self.doSelected(file_selected)
 
     def closeChecks(self, obj):
         print("File is Saved: ", self.isSaved)
