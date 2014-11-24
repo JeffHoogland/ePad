@@ -201,6 +201,7 @@ class Interface(object):
                                          size_hint_weight=EXPAND_BOTH,
                                          size_hint_align=FILL_BOTH)
         self.fileSelector.callback_done_add(self.fileSelected)
+        self.fileSelector.callback_activated_add(self.fileSelected)
 
         self.fileSelector.show()
 
