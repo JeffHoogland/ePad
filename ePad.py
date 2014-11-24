@@ -139,6 +139,15 @@ def toggleHidden(fileSelector):
     #   four times each time Ctrl-h is pressed
     toggleHidden.count = (toggleHidden.count + 1) % 4
 
+# Same Modulo 4 Hack because this function is called
+    #   four times each time Ctrl-q is pressed
+def closeCtrlChecks(win):
+    if not hasattr(toggleHidden, 'count'):
+        toggleHidden.count = 0
+    if toggleHidden.count == 3:
+        win.closeChecks(win)
+    toggleHidden.count = (toggleHidden.count + 1) % 4
+
 
 class Interface(object):
     def __init__(self):
@@ -576,7 +585,7 @@ class Interface(object):
                 if not self.flip.front_visible_get():
                     toggleHidden(self.fileSelector)
             elif event.key.lower() == "q":
-                self.closeChecks(self.mainWindow)
+                closeCtrlChecks(self)
 
     # Legacy hack no longer needed
     #  there was an issue in elementary entry where it would
