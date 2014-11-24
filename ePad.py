@@ -98,7 +98,7 @@ def errorPopup(window, errorMsg):
     # Add dialog-error Image to table
     need_ethumb()
     icon = Icon(errorPopup, thumb='True')
-    icon.standard_set('dialog-error')
+    icon.standard_set('dialog-warning')
     # Using gksudo or sudo fails to load Image here
     #   unless options specify using preserving their existing environment.
     #   may also fail to load other icons but does not raise an exception
