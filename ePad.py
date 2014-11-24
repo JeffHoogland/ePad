@@ -48,7 +48,7 @@ try:
     from efl.elementary.separator import Separator
     from efl.elementary.image import Image
     from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
-        markup_to_utf8
+        markup_to_utf8, ELM_WRAP_NONE, ELM_WRAP_MIXED
     from efl.elementary.popup import Popup
     from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
     from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
@@ -77,7 +77,7 @@ ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
 PADDING = 15, 0
 # User options
-WORD_WRAP = True
+WORD_WRAP = ELM_WRAP_MIXED
 SHOW_POS = True
 NOTIFY_ROOT = True
 SHOW_HIDDEN = False
@@ -189,6 +189,7 @@ class Interface(object):
         self.about = aboutWin(self, self.mainWindow)
         self.about.hide()
         # Initialize Text entry box and line label
+        self.wordwrap = WORD_WRAP 
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
 
@@ -660,7 +661,10 @@ class ePadToolbar(Toolbar):
         it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
         chk = Check(canvas, disabled=True)
         it.content = chk
-        it.content.state = WORD_WRAP
+        if self._parent.wordwrap == ELM_WRAP_MIXED:
+            it.content.state = True
+        else:
+            it.content.state = False
 
         # ---------------------------
 
@@ -669,9 +673,13 @@ class ePadToolbar(Toolbar):
 
     def optionsWWPress(self, obj, it):
         wordwrap = self._parent.mainEn.line_wrap
-        wordwrap = not wordwrap
+        if wordwrap == ELM_WRAP_MIXED:
+            wordwrap = ELM_WRAP_NONE
+            it.content.state = False
+        else:
+            wordwrap = ELM_WRAP_MIXED
+            it.content.state = True
         self._parent.mainEn.line_wrap = wordwrap
-        it.content.state = wordwrap
         # FIXME: is this variable needed for anything?
         self._parent.wordwrap = wordwrap
 
