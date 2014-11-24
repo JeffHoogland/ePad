@@ -522,6 +522,9 @@ class Interface(object):
     def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
+        # Markup can end up in file names because file_selector name_entry is
+        #   an elementary entry. So lets sanitize file_selected.
+        file_selected = markup_to_utf8(file_selected)
         print("File Selected: {0}".format(file_selected))
         IsSave = fs.is_save_get()
 
