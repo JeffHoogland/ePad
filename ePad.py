@@ -41,7 +41,7 @@ try:
     from efl.elementary.background import Background
     from efl.elementary.box import Box
     from efl.elementary.button import Button
-    from efl.elementary.label import Label
+    from efl.elementary.label import Label, ELM_WRAP_WORD
     from efl.elementary.icon import Icon
     from efl.elementary.need import need_ethumb
     from efl.elementary.notify import Notify, ELM_NOTIFY_ALIGN_FILL
@@ -54,6 +54,7 @@ try:
     from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
         ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
     from efl.elementary.fileselector import Fileselector
+    from efl.elementary.table import Table
     from efl.elementary.transit import Transit, \
         ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
     from efl.elementary.check import Check
@@ -88,7 +89,41 @@ def printErr(*objs):
 
 def errorPopup(window, errorMsg):
     errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
-    errorPopup.text = errorMsg
+
+    # Add a table to hold dialog image and text to Popup
+    tb = Table(errorPopup, size_hint_weight=EXPAND_BOTH)
+    errorPopup.part_content_set("default", tb)
+    tb.show()
+
+    # Add dialog-error Image to table
+    need_ethumb()
+    icon = Icon(errorPopup, thumb='True')
+    icon.standard_set('dialog-error')
+    # Using gksudo or sudo fails to load Image here
+    #   unless options specify using preserving their existing environment.
+    #   may also fail to load other icons but does not raise an exception
+    #   in that situation.
+    # Works fine using eSudo as a gksudo alternative,
+    #   other alternatives not tested
+    try:
+        dialogImage = Image(errorPopup,
+                            size_hint_weight=EXPAND_HORIZ,
+                            size_hint_align=FILL_BOTH,
+                            file=icon.file_get())
+        tb.pack(dialogImage, 0, 0, 1, 1)
+        dialogImage.show()
+    except RuntimeError:
+        # An error message is displayed for this same error
+        #   when aboutWin is initialized so no need to redisplay.
+        pass
+    # Add dialog text to table
+    dialogLabel = Label(errorPopup, line_wrap=ELM_WRAP_WORD,
+                        size_hint_weight=EXPAND_HORIZ,
+                        size_hint_align=FILL_BOTH)
+    dialogLabel.text = errorMsg
+    tb.pack(dialogLabel, 1, 0, 1, 1)
+    dialogLabel.show()
+
     errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
     errorPopup.show()
 
@@ -400,7 +435,7 @@ class Interface(object):
                     with open(file_selected) as f:
                         tmp_text = f.readline()
                 except IOError as err:
-                    # Fixme: Duplicated code 
+                    # Fixme: Duplicated code
                     print("ERROR: {0}: '{1}'".format(err.strerror,
                                                      file_selected))
                     if err.errno == errno.EACCES:
@@ -425,25 +460,52 @@ class Interface(object):
 
                 self.mainEn.focus_set(True)
 
-
     def fileExists(self, filePath):
 
         self.confirmPopup = Popup(self.mainWindow,
                                   size_hint_weight=EXPAND_BOTH)
-        current_file = \
-            os.path.basename(filePath)
-        self.confirmPopup.text = "'%s' already exists. Overwrite?" \
-                                 % (current_file)
+
+        # Add a table to hold dialog image and text to Popup
+        tb = Table(self.confirmPopup, size_hint_weight=EXPAND_BOTH)
+        self.confirmPopup.part_content_set("default", tb)
+        tb.show()
+
+        # Add dialog-error Image to table
+        need_ethumb()
+        icon = Icon(self.confirmPopup, thumb='True')
+        icon.standard_set('dialog-question')
+        # Using gksudo or sudo fails to load Image here
+        #   unless options specify using preserving their existing environment.
+        #   may also fail to load other icons but does not raise an exception
+        #   in that situation.
+        # Works fine using eSudo as a gksudo alternative,
+        #   other alternatives not tested
+        try:
+            dialogImage = Image(self.confirmPopup,
+                                size_hint_weight=EXPAND_HORIZ,
+                                size_hint_align=FILL_BOTH,
+                                file=icon.file_get())
+            tb.pack(dialogImage, 0, 0, 1, 1)
+            dialogImage.show()
+        except RuntimeError:
+            # An error message is displayed for this same error
+            #   when aboutWin is initialized so no need to redisplay.
+            pass
+        # Add dialog text to table
+        dialogLabel = Label(self.confirmPopup, line_wrap=ELM_WRAP_WORD,
+                            size_hint_weight=EXPAND_HORIZ,
+                            size_hint_align=FILL_BOTH)
+        current_file = os.path.basename(filePath)
+        dialogLabel.text = "'%s' already exists. Overwrite?<br><br>" \
+                           % (current_file)
+        tb.pack(dialogLabel, 1, 0, 1, 1)
+        dialogLabel.show()
+
         # Close without saving button
         no_btt = Button(self.mainWindow)
         no_btt.text = "No"
         no_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
         no_btt.show()
-        # cancel close request
-        cancel_btt = Button(self.mainWindow)
-        cancel_btt.text = "Cancel"
-        cancel_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
-        cancel_btt.show()
         # Save the file and then close button
         sav_btt = Button(self.mainWindow)
         sav_btt.text = "Yes"
@@ -643,11 +705,11 @@ class aboutWin(Window):
         # Works fine using eSudo as a gksudo alternative,
         #   other alternatives not tested
         try:
-            aboutImage = Image(self.aboutDialog, no_scale=1,
+            aboutImage = Image(self.aboutDialog, no_scale=True,
                                size_hint_weight=EXPAND_BOTH,
                                size_hint_align=FILL_BOTH,
                                file=icon.file_get())
-            aboutImage.aspect_fixed_set(0)
+            aboutImage.aspect_fixed_set(False)
 
             mainBox.pack_end(aboutImage)
             aboutImage.show()
