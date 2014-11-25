@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.8-2"
+__version__ = "0.5.8-3"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -432,7 +432,8 @@ class Interface(object):
                     self.mainEn.file_save()
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
-                self.isSaved = False
+                self.isSaved = True
+                self.isNewFile = False
             else:
                 if os.path.isdir(file_selected):
                     print("ERROR: {0}: is a directory. "
