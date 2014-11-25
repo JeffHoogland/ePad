@@ -50,7 +50,7 @@ try:
     from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
         markup_to_utf8, ELM_WRAP_NONE, ELM_WRAP_MIXED
     from efl.elementary.popup import Popup
-    from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_NONE
+    from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_DEFAULT
     from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
         ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
     from efl.elementary.fileselector import Fileselector
@@ -139,14 +139,33 @@ def toggleHidden(fileSelector):
     #   four times each time Ctrl-h is pressed
     toggleHidden.count = (toggleHidden.count + 1) % 4
 
+
 # Same Modulo 4 Hack because this function is called
     #   four times each time Ctrl-q is pressed
 def closeCtrlChecks(win):
-    if not hasattr(toggleHidden, 'count'):
-        toggleHidden.count = 0
-    if toggleHidden.count == 3:
+    if not hasattr(closeCtrlChecks, 'count'):
+        closeCtrlChecks.count = 0
+    if closeCtrlChecks.count == 3:
         win.closeChecks(win)
-    toggleHidden.count = (toggleHidden.count + 1) % 4
+    closeCtrlChecks.count = (closeCtrlChecks.count + 1) % 4
+
+
+def closeMenu(obj, label):
+    if not hasattr(closeMenu, 'count'):
+        closeMenu.count = 0
+    if not hasattr(closeMenu, 'name'):
+        closeMenu.lastItem = label
+    if closeMenu.lastItem != label:
+        closeMenu.count = 0
+    if closeMenu.count:
+        obj.selected_set(False)
+        obj.menu_get().close()
+    closeMenu.count = (closeMenu.count + 1) % 2
+
+
+def resetCloseMenuCount(obj):
+        global closeMenu
+        closeMenu.count = 0
 
 
 class Interface(object):
@@ -240,6 +259,7 @@ class Interface(object):
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.elm_event_callback_add(self.eventsCb)
+        self.mainEn.callback_clicked_add(resetCloseMenuCount)
         # delete line lable if it exist so we can create and add new one
         #    Later need to rethink logic here
         try:
@@ -380,8 +400,8 @@ class Interface(object):
                     errorPopup(self.mainWindow, errorMsg)
                 return
             newfile.close()
-            # if entry is empty and the file does not exists then 
-            #   entry.file_save will destroy the file created about by the 
+            # if entry is empty and the file does not exists then
+            #   entry.file_save will destroy the file created about by the
             #   open statement above for some odd reason ...
             if not self.mainEn.is_empty:
                 self.mainEn.file_save()
@@ -458,7 +478,7 @@ class Interface(object):
                         self.isSaved = False
                     elif err.errno == errno.EACCES:
                         print("ERROR: {0}: '{1}'".format(err.strerror,
-                                                     file_selected))
+                              file_selected))
                         errorMsg = ("Permision denied: <b>'%s'</b>."
                                     "<br><br>Operation failed !!!"
                                     % (file_selected))
@@ -466,7 +486,7 @@ class Interface(object):
                         return
                     else:
                         print("ERROR: {0}: '{1}'".format(err.strerror,
-                                                     file_selected))
+                              file_selected))
                         errorMsg = ("ERROR: %s: '%s'"
                                     "<br><br>Operation failed !!!"
                                     % (err.strerror, file_selected))
@@ -547,7 +567,8 @@ class Interface(object):
         # Markup can end up in file names because file_selector name_entry is
         #   an elementary entry. So lets sanitize file_selected.
         file_selected = markup_to_utf8(file_selected)
-        print("File Selected: {0}".format(file_selected))
+        if file_selected:
+            print("File Selected: {0}".format(file_selected))
         IsSave = fs.is_save_get()
 
         if file_selected:
@@ -641,7 +662,8 @@ class ePadToolbar(Toolbar):
         self.homogeneous = False
         self.size_hint_weight = (0.0, 0.0)
         self.size_hint_align = (EVAS_HINT_FILL, 0.0)
-        self.select_mode = ELM_OBJECT_SELECT_MODE_NONE
+        self.select_mode = ELM_OBJECT_SELECT_MODE_DEFAULT
+        self.callback_clicked_add(self.itemClicked)
 
         self.menu_parent = canvas
 
@@ -699,6 +721,13 @@ class ePadToolbar(Toolbar):
 
     def copyPress(self, obj, it):
         self._parent.mainEn.selection_copy()
+
+    def itemClicked(self, obj):
+        item = obj.selected_item_get()
+        if item.menu_get() is None and item.selected_get():
+            item.selected_set(False)
+        elif item.menu_get():
+            closeMenu(item, item.text_get())
 
     def pastePress(self, obj, it):
         self._parent.mainEn.selection_paste()
