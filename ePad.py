@@ -89,6 +89,7 @@ def printErr(*objs):
 
 def errorPopup(window, errorMsg):
     errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
+    errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
 
     # Add a table to hold dialog image and text to Popup
     tb = Table(errorPopup, size_hint_weight=EXPAND_BOTH)
@@ -124,7 +125,14 @@ def errorPopup(window, errorMsg):
     tb.pack(dialogLabel, 1, 0, 1, 1)
     dialogLabel.show()
 
-    errorPopup.callback_block_clicked_add(lambda obj: errorPopup.delete())
+    # Ok Button
+    ok_btt = Button(errorPopup)
+    ok_btt.text = "Ok"
+    ok_btt.callback_clicked_add(lambda obj: errorPopup.delete())
+    ok_btt.show()
+
+    # add button to popup
+    errorPopup.part_content_set("button3", ok_btt)
     errorPopup.show()
 
 
@@ -427,12 +435,12 @@ class Interface(object):
                                                      file_selected))
                     if err.errno == errno.EACCES:
                         errorMsg = ("Permision denied: <b>'%s'</b>."
-                                    "<br><br>Operation failed !!!"
+                                    "<br><br>Operation failed !!!</br>"
                                     % (file_selected))
                         errorPopup(self.mainWindow, errorMsg)
                     else:
                         errorMsg = ("ERROR: %s: '%s'"
-                                    "<br><br>Operation failed !!!"
+                                    "<br><br>Operation failed !!!</br>"
                                     % (err.strerror, file_selected))
                         errorPopup(self.mainWindow, errorMsg)
                     return
@@ -460,7 +468,7 @@ class Interface(object):
                           "Could not set file.".format(file_selected))
                     current_file = os.path.basename(file_selected)
                     errorMsg = ("<b>'%s'</b> is a folder."
-                                "<br><br>Operation failed !!!"
+                                "<br><br>Operation failed !!!</br>"
                                 % (current_file))
                     errorPopup(self.mainWindow, errorMsg)
                     return
@@ -480,7 +488,7 @@ class Interface(object):
                         print("ERROR: {0}: '{1}'".format(err.strerror,
                               file_selected))
                         errorMsg = ("Permision denied: <b>'%s'</b>."
-                                    "<br><br>Operation failed !!!"
+                                    "<br><br>Operation failed !!!</br>"
                                     % (file_selected))
                         errorPopup(self.mainWindow, errorMsg)
                         return
@@ -488,7 +496,7 @@ class Interface(object):
                         print("ERROR: {0}: '{1}'".format(err.strerror,
                               file_selected))
                         errorMsg = ("ERROR: %s: '%s'"
-                                    "<br><br>Operation failed !!!"
+                                    "<br><br>Operation failed !!!</br>"
                                     % (err.strerror, file_selected))
                         errorPopup(self.mainWindow, errorMsg)
                         return
