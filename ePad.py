@@ -189,7 +189,8 @@ class Interface(object):
         self.about = aboutWin(self, self.mainWindow)
         self.about.hide()
         # Initialize Text entry box and line label
-        self.wordwrap = WORD_WRAP 
+
+        # FIXME: self.wordwrap initialized by ePadToolbar
         print("Word wrap Initialized: {0}".format(self.wordwrap))
         self.entryInit()
 
@@ -212,7 +213,7 @@ class Interface(object):
                                          size_hint_align=FILL_BOTH)
         self.fileSelector.callback_done_add(self.fileSelected)
         self.fileSelector.callback_activated_add(self.fileSelected)
-
+        self.fileSelector.path_set(os.getcwd())
         self.fileSelector.show()
 
         self.fileBox.pack_end(self.fileLabel)
@@ -379,7 +380,11 @@ class Interface(object):
                     errorPopup(self.mainWindow, errorMsg)
                 return
             newfile.close()
-            self.mainEn.file_save()
+            # if entry is empty and the file does not exists then 
+            #   entry.file_save will destroy the file created about by the 
+            #   open statement above for some odd reason ...
+            if not self.mainEn.is_empty:
+                self.mainEn.file_save()
             self.mainWindow.title_set("%s - ePad"
                                       % os.path.basename(self.mainEn.file[0]))
             self.isSaved = True
@@ -427,8 +432,7 @@ class Interface(object):
                     self.mainEn.file_save()
                 self.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
-                self.isSaved = True
-                self.isNewFile = False
+                self.isSaved = False
             else:
                 if os.path.isdir(file_selected):
                     print("ERROR: {0}: is a directory. "
@@ -446,20 +450,27 @@ class Interface(object):
                     with open(file_selected) as f:
                         tmp_text = f.readline()
                 except IOError as err:
-                    # Fixme: Duplicated code
-                    print("ERROR: {0}: '{1}'".format(err.strerror,
+
+                    if err.errno == errno.ENOENT:
+                        print("Creating New file '{0}'".format(file_selected))
+                        # self.fileSelector.current_name_set(file_selected)
+                        self.isSaved = False
+                    elif err.errno == errno.EACCES:
+                        print("ERROR: {0}: '{1}'".format(err.strerror,
                                                      file_selected))
-                    if err.errno == errno.EACCES:
                         errorMsg = ("Permision denied: <b>'%s'</b>."
                                     "<br><br>Operation failed !!!"
                                     % (file_selected))
                         errorPopup(self.mainWindow, errorMsg)
+                        return
                     else:
+                        print("ERROR: {0}: '{1}'".format(err.strerror,
+                                                     file_selected))
                         errorMsg = ("ERROR: %s: '%s'"
                                     "<br><br>Operation failed !!!"
                                     % (err.strerror, file_selected))
                         errorPopup(self.mainWindow, errorMsg)
-                    return
+                        return
                 try:
                     self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
@@ -603,6 +614,8 @@ class Interface(object):
     #        return theText
 
     def launch(self, startingFile=False):
+        if startingFile and os.path.dirname(startingFile) == '':
+                startingFile = os.getcwd() + '/' + startingFile
         if startingFile:
             if os.path.isdir(os.path.dirname(startingFile)):
                 self.fileSelected(self.fileSelector, startingFile, True)
