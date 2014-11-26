@@ -34,6 +34,7 @@ import os
 import time
 import urllib
 try:
+    from efl import ecore
     from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
     from efl import elementary
     from efl.elementary.window import StandardWindow, Window
@@ -81,6 +82,7 @@ WORD_WRAP = ELM_WRAP_MIXED
 SHOW_POS = True
 NOTIFY_ROOT = True
 SHOW_HIDDEN = False
+NEW_INSTANCE = True
 
 
 def printErr(*objs):
@@ -196,6 +198,7 @@ class Interface(object):
                            size_hint_align=FILL_BOTH)
         self.mainBox.show()
 
+        self.newInstance = NEW_INSTANCE
         self.mainTb = ePadToolbar(self, self.mainWindow)
         self.mainTb.focus_allow = False
         self.mainTb.show()
@@ -318,6 +321,10 @@ class Interface(object):
         self.isSaved = False
 
     def newFile(self, obj=None, ignoreSave=False):
+        if self.newInstance:
+            print("Launching new instance")
+            ecore.Exe('epad', ecore.ECORE_EXE_PIPE_READ|ecore.ECORE_EXE_PIPE_ERROR|ecore.ECORE_EXE_PIPE_WRITE)
+            return
         if self.isSaved is True or ignoreSave is True:
             trans = Transit()
             trans.object_add(self.mainEn)
@@ -711,6 +718,14 @@ class ePadToolbar(Toolbar):
         else:
             it.content.state = False
 
+        it = menu.item_add(None, "New Instance", None, self.optionsNew)
+        chk = Check(canvas, disabled=True)
+        it.content = chk
+        if self._parent.newInstance:
+            it.content.state = True
+        else:
+            it.content.state = False
+
         # ---------------------------
 
         self.item_append("dialog-information", "About",
@@ -750,6 +765,14 @@ class ePadToolbar(Toolbar):
 
     def selectAllPress(self, obj, it):
         self._parent.mainEn.select_all()
+        resetCloseMenuCount(None)
+
+    def optionsNew(self, obj, it):
+        self._parent.newInstance = not self._parent.newInstance
+        if self._parent.newInstance:
+            it.content.state = True
+        else:
+            it.content.state = False
         resetCloseMenuCount(None)
 
 
