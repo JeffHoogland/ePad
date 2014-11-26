@@ -323,7 +323,8 @@ class Interface(object):
     def newFile(self, obj=None, ignoreSave=False):
         if self.newInstance:
             print("Launching new instance")
-            ecore.Exe('epad', ecore.ECORE_EXE_PIPE_READ|ecore.ECORE_EXE_PIPE_ERROR|ecore.ECORE_EXE_PIPE_WRITE)
+            ecore.Exe('epad', ecore.ECORE_EXE_PIPE_READ |
+                      ecore.ECORE_EXE_PIPE_ERROR | ecore.ECORE_EXE_PIPE_WRITE)
             return
         if self.isSaved is True or ignoreSave is True:
             trans = Transit()
@@ -518,6 +519,7 @@ class Interface(object):
                                           % os.path.basename(file_selected))
 
                 self.mainEn.focus_set(True)
+                print("start path here", self.mainEn.file_get())
 
     def fileExists(self, filePath):
 
@@ -585,6 +587,14 @@ class Interface(object):
         file_selected = markup_to_utf8(file_selected)
         if file_selected:
             print("File Selected: {0}".format(file_selected))
+            fs.path_set(os.path.dirname(file_selected))
+            # This fails if file_selected does not exist yet
+            try:
+                fs.selected = file_selected
+            except RuntimeError:
+                # FIXME: would be nice if I could set fileSelector name entry
+                pass
+
         IsSave = fs.is_save_get()
 
         if file_selected:
