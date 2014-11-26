@@ -19,7 +19,7 @@
 from __future__ import print_function  # May as well bite the bullet
 
 __author__ = "Jeff Hoogland"
-__contirbutors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
+__contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
 __version__ = "0.5.8-3"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
@@ -173,7 +173,8 @@ def closeMenu(obj, label):
 
 def resetCloseMenuCount(obj):
         global closeMenu
-        closeMenu.count = 0
+        if hasattr(closeMenu, 'count'):
+            closeMenu.count = 0
 
 
 class Interface(object):
@@ -726,9 +727,11 @@ class ePadToolbar(Toolbar):
         self._parent.mainEn.line_wrap = wordwrap
         # FIXME: is this variable needed for anything?
         self._parent.wordwrap = wordwrap
+        resetCloseMenuCount(None)
 
     def copyPress(self, obj, it):
         self._parent.mainEn.selection_copy()
+        resetCloseMenuCount(None)
 
     def itemClicked(self, obj):
         item = obj.selected_item_get()
@@ -739,12 +742,15 @@ class ePadToolbar(Toolbar):
 
     def pastePress(self, obj, it):
         self._parent.mainEn.selection_paste()
+        resetCloseMenuCount(None)
 
     def cutPress(self, obj, it):
         self._parent.mainEn.selection_cut()
+        resetCloseMenuCount(None)
 
     def selectAllPress(self, obj, it):
         self._parent.mainEn.select_all()
+        resetCloseMenuCount(None)
 
 
 class aboutWin(Window):
