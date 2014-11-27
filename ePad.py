@@ -235,15 +235,16 @@ class Interface(object):
                                size_hint_weight=EXPAND_HORIZ,
                                size_hint_align=FILL_BOTH, text="")
         self.fileLabel.show()
-
+        self.lastDir = os.getenv("HOME")
         self.fileSelector = Fileselector(self.mainWindow, is_save=False,
                                          expandable=False, folder_only=False,
                                          hidden_visible=SHOW_HIDDEN,
-                                         path=os.getenv("HOME"),
+                                         path=self.lastDir,
                                          size_hint_weight=EXPAND_BOTH,
                                          size_hint_align=FILL_BOTH)
         self.fileSelector.callback_done_add(self.fileSelected)
         self.fileSelector.callback_activated_add(self.fileSelected)
+        self.fileSelector.callback_directory_open_add(self.updateLastDir)
         self.fileSelector.path_set(os.getcwd())
         self.fileSelector.show()
 
@@ -322,8 +323,11 @@ class Interface(object):
 
     def newFile(self, obj=None, ignoreSave=False):
         if self.newInstance:
-            print("Launching new instance")
-            ecore.Exe('epad', ecore.ECORE_EXE_PIPE_READ |
+
+            # sh does not properly handle space between -d and path
+            command = "epad -d'{0}'".format(self.lastDir)
+            print("Launching new instance: {0}".format(command))
+            ecore.Exe(command, ecore.ECORE_EXE_PIPE_READ |
                       ecore.ECORE_EXE_PIPE_ERROR | ecore.ECORE_EXE_PIPE_WRITE)
             return
         if self.isSaved is True or ignoreSave is True:
@@ -519,7 +523,6 @@ class Interface(object):
                                           % os.path.basename(file_selected))
 
                 self.mainEn.focus_set(True)
-                print("start path here", self.mainEn.file_get())
 
     def fileExists(self, filePath):
 
@@ -587,7 +590,8 @@ class Interface(object):
         file_selected = markup_to_utf8(file_selected)
         if file_selected:
             print("File Selected: {0}".format(file_selected))
-            fs.path_set(os.path.dirname(file_selected))
+            self.lastDir = os.path.dirname(file_selected)
+            fs.path_set(self.lastDir)
             # This fails if file_selected does not exist yet
             try:
                 fs.selected = file_selected
@@ -611,6 +615,9 @@ class Interface(object):
                     self.fileExists(file_selected)
                     return
         self.doSelected(file_selected)
+
+    def updateLastDir(self, fs, path):
+        self.lastDir = path
 
     def closeChecks(self, obj):
         print("File is Saved: ", self.isSaved)
@@ -661,22 +668,25 @@ class Interface(object):
     #    else:
     #        return theText
 
-    def launch(self, startingFile=False):
-        if startingFile and os.path.dirname(startingFile) == '':
-                startingFile = os.getcwd() + '/' + startingFile
-        if startingFile:
-            if os.path.isdir(os.path.dirname(startingFile)):
-                self.fileSelected(self.fileSelector, startingFile, True)
-        self.mainWindow.show()
-        # if startingFile is False this test fails with error
-        try:
-            if not os.path.isdir(os.path.dirname(startingFile)):
-                print("Error: {0} is an Invalid Path".format(startingFile))
+    def launch(self, start=[]):
+        if start and start[0] and os.path.dirname(start[0]) == '':
+                start[0] = os.getcwd() + '/' + start[0]
+        if start and start[0]:
+            if os.path.isdir(os.path.dirname(start[0])):
+                self.fileSelected(self.fileSelector, start[0], True)
+            else:
+                print("Error: {0} is an Invalid Path".format(start))
                 errorMsg = ("<b>'%s'</b> is an Invalid path."
-                            "<br><br>Open failed !!!" % (startingFile))
+                            "<br><br>Open failed !!!" % (start))
                 errorPopup(self.mainWindow, errorMsg)
-        except AttributeError:
-            pass
+        if start and start[1]:
+            if os.path.isdir(start[1]):
+                print("Initializing file selection path: {0}".format(start[1]))
+                self.fileSelector.path_set(start[1])
+                self.lastDir = start[1]
+            else:
+                print("Error: {0} is an Invalid Path".format(start[1]))
+        self.mainWindow.show()
 
 
 class ePadToolbar(Toolbar):
@@ -913,15 +923,22 @@ if __name__ == "__main__":
 
     # Parse Arguments
     #   More arguments will be added with increased functionality
+
+    # FIXME: format issue with epad -h
     parser = ag.ArgumentParser(prog='ePad',
                                description=__description__,
                                epilog=__source__)
-    parser.add_argument('filepath', nargs='?', metavar='filename',
-                        help='path to file to open')
+    location = parser.add_mutually_exclusive_group()
+    location.add_argument('filepath', nargs='?', metavar='filename',
+                          help='path to file to open')
+    # FIXME: add default value to directory option
+    #           and remove fileSelector set_path code where not needed
+    location.add_argument('-d', '--directory', action='store', metavar='',
+                          help='initial directory for file selection')
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s {0}'.format(__version__))
     results = parser.parse_args()
-    ourFile = results.filepath
+    ourFile, initDir = results.filepath, results.directory
 
     # Start App
     elementary.init()
@@ -937,9 +954,11 @@ if __name__ == "__main__":
                 ourFile = urllib.request.url2pathname(ourFile[7:])
 
         print("Opening file: '{0}'".format(ourFile))
-        GUI.launch(ourFile)
+        GUI.launch([ourFile, None])
+    elif initDir:
+        GUI.launch([None, initDir])
     else:
-        GUI.launch()
+        GUI.launch([None, os.getcwd()])
     elementary.run()
 
     # Shutdown App
