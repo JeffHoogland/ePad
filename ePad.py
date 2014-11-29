@@ -28,6 +28,7 @@ __source__ = 'Source code and bug reports: {0}'.format(__github__)
 PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
 
 
+import argparse
 import errno
 import sys
 import os
@@ -585,8 +586,8 @@ class Interface(object):
     def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
             self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
-            # Markup can end up in file names because file_selector name_entry is
-            #   an elementary entry. So lets sanitize file_selected.
+            # Markup can end up in file names because file_selector name_entry
+            #   is an elementary entry. So lets sanitize file_selected.
             file_selected = markup_to_utf8(file_selected)
         if file_selected:
             print("File Selected: {0}".format(file_selected))
@@ -918,16 +919,41 @@ class aboutWin(Window):
         self.aboutDialog.show()
 
 
+class CustomFormatter(argparse.HelpFormatter):
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            metavar, = self._metavar_formatter(action, action.dest)(1)
+            return metavar
+        else:
+            parts = []
+            # if the Optional doesn't take a value, format is:
+            #    -s, --long
+            if action.nargs == 0:
+                parts.extend(action.option_strings)
+
+            # if the Optional takes a value, format is:
+            #    -s ARGS, --long ARGS
+            # change to
+            #    -s, --long ARGS
+            else:
+                default = action.dest.upper()
+                args_string = self._format_args(action, default)
+                for option_string in action.option_strings:
+                    # parts.append('%s %s' % (option_string, args_string))
+                    parts.append('%s' % option_string)
+                parts[-1] += ' %s' % args_string
+            return ', '.join(parts)
+
+
 if __name__ == "__main__":
-    import argparse as ag
 
     # Parse Arguments
     #   More arguments will be added with increased functionality
 
-    # FIXME: format issue with epad -h
-    parser = ag.ArgumentParser(prog='ePad',
-                               description=__description__,
-                               epilog=__source__)
+    parser = argparse.ArgumentParser(prog='epad',
+                                     description=__description__,
+                                     epilog=__source__,
+                                     formatter_class=CustomFormatter)
     location = parser.add_mutually_exclusive_group()
     location.add_argument('filepath', nargs='?', metavar='filename',
                           help='path to file to open')
