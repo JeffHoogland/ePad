@@ -7,8 +7,6 @@ ePad default theme| ePad RadianE19 theme
 Main development now on development branch
 
 TODO List:
-- Add License ??
-- PEP8/pylint conformant
 - Find/Replace Functions
 - Undo/redo functions
 - Line numbers toggle
@@ -16,8 +14,6 @@ TODO List:
 - Options Selector
 - Rc config file
 - Optional Menu
-- Command line arguments
-- Man Page
 - Optional support for Gtk recently used
 - Internationalization
 
