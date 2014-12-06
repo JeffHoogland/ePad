@@ -517,7 +517,8 @@ class Interface(object):
                 try:
                     self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
-                except RuntimeError, msg:
+                except RuntimeError:
+                    _, msg = sys.exc_info()[:2]
                     # Entry.file_set fails on empty files
                     print("Empty file: {0}".format(file_selected))
                 self.mainWindow.title_set("%s - ePad"
@@ -835,7 +836,8 @@ class aboutWin(Window):
 
             mainBox.pack_end(aboutImage)
             aboutImage.show()
-        except RuntimeError, msg:
+        except RuntimeError:
+            _, msg = sys.exc_info()[:2]
             print("Warning: to run as root please use:\n"
                   "\t gksudo -k or sudo -E \n"
                   "Continuing with minor errors ...")
