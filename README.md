@@ -9,7 +9,6 @@ Main development now on development branch
 TODO List:
 - Find/Replace Functions
 - Undo/redo functions
-- Line numbers toggle
 - Font Selector
 - Options Selector
 - Rc config file
@@ -17,4 +16,7 @@ TODO List:
 - Optional support for Gtk recently used
 - Internationalization
 
-Project Started by Jeff Hoogland on: 03/16/2014
+Credits: 
+- [Jeff Hoogland](http://www.jeffhoogland.com/)
+- [Robert Wiley](https://github.com/rbtylee)
+- [Kai Huuhko](https://github.com/kaihu)

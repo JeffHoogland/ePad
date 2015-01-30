@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.5.8-3"
+__version__ = "0.6.0-1"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -48,7 +48,9 @@ try:
     from efl.elementary.need import need_ethumb
     from efl.elementary.notify import Notify, ELM_NOTIFY_ALIGN_FILL
     from efl.elementary.separator import Separator
+    from efl.elementary.scroller import Scroller
     from efl.elementary.image import Image
+    from efl.elementary.list import List
     from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
         markup_to_utf8, ELM_WRAP_NONE, ELM_WRAP_MIXED
     from efl.elementary.popup import Popup
@@ -79,7 +81,7 @@ ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
 PADDING = 15, 0
 # User options
-WORD_WRAP = ELM_WRAP_MIXED
+WORD_WRAP = ELM_WRAP_NONE
 SHOW_POS = True
 NOTIFY_ROOT = True
 SHOW_HIDDEN = False
@@ -203,7 +205,9 @@ class Interface(object):
         self.mainTb = ePadToolbar(self, self.mainWindow)
         self.mainTb.focus_allow = False
         self.mainTb.show()
+        
         self.mainBox.pack_end(self.mainTb)
+        
         # Root User Notification
         if os.geteuid() == 0:
             printErr("Caution: Root User")
@@ -221,6 +225,32 @@ class Interface(object):
         self.about = aboutWin(self, self.mainWindow)
         self.about.hide()
         # Initialize Text entry box and line label
+
+        self.lineList = Entry(self.mainWindow,
+                           size_hint_weight=(0.052, EVAS_HINT_EXPAND),
+                           size_hint_align=FILL_BOTH)
+        self.lineList.text_style_user_push("DEFAULT='font_size=14'")
+        self.lineList.editable_set(False)
+        self.currentLinesShown = 1
+        self.lineList.entry_append("<font_size=14>1<br>")
+        self.lineList.show()
+        
+        self.lineNums = True
+
+        self.entryBox = Box(self.mainWindow,
+                           size_hint_weight=EXPAND_BOTH,
+                           size_hint_align=FILL_BOTH)
+        self.entryBox.horizontal = True
+        self.entryBox.show()
+        
+        self.scr = Scroller(self.mainWindow,
+                           size_hint_weight=EXPAND_BOTH,
+                           size_hint_align=FILL_BOTH)
+        self.scr.content = self.entryBox
+        self.scr.show()
+        
+        self.entryBox.pack_end(self.lineList)
+        self.mainBox.pack_end(self.scr)
 
         # FIXME: self.wordwrap initialized by ePadToolbar
         print("Word wrap Initialized: {0}".format(self.wordwrap))
@@ -274,6 +304,7 @@ class Interface(object):
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.elm_event_callback_add(self.eventsCb)
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
+        self.mainEn.text_style_user_push("DEFAULT='font_size=14'")
         # delete line lable if it exist so we can create and add new one
         #    Later need to rethink logic here
         try:
@@ -292,15 +323,23 @@ class Interface(object):
             self.line_label.show()
             self.mainBox.pack_end(self.line_label)
         # self.mainEn.markup_filter_append(self.textFilter)
-
+        self.totalLines = 0
         self.mainEn.show()
         self.mainEn.focus_set(True)
-        try:
-            self.mainBox.pack_before(self.mainEn, self.line_label)
-        except AttributeError:
-            # line_label has not been initialized on first run
-            #   Should have better logic on all this
-            self.mainBox.pack_end(self.mainEn)
+        self.entryBox.pack_end(self.mainEn)
+
+    def checkLineNumbers(self):
+        if self.currentLinesShown != self.totalLines:
+            if self.currentLinesShown < self.totalLines:
+                for i in range(self.currentLinesShown, self.totalLines):
+                    linNum = i+1
+                    self.lineList.entry_append("<font_size=14>%s<br>"%linNum)
+            else:
+                self.lineList.entry_set("")
+                for i in range(self.totalLines):
+                    linNum = i+1
+                    self.lineList.entry_append("<font_size=14>%s<br>"%linNum)
+            self.currentLinesShown = self.totalLines
 
     def curChanged(self, entry, label):
         # get linear index into current text
@@ -308,6 +347,9 @@ class Interface(object):
         # Replace <br /> tag with single char
         #   to simplify (line, col) calculation
         tmp_text = markup_to_utf8(entry.entry_get())
+        self.totalLines = tmp_text.count("\n")+1
+        if self.lineNums:
+            self.checkLineNumbers()
         line = tmp_text[:index].count("\n") + 1
         col = len(tmp_text[:index].split("\n")[-1]) + 1
         # Update label text with line, col
@@ -731,14 +773,19 @@ class ePadToolbar(Toolbar):
         tb_it.menu = True
         menu = tb_it.menu
         self._parent.wordwrap = WORD_WRAP
-        it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
+        '''it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
         chk = Check(canvas, disabled=True)
         it.content = chk
         if self._parent.wordwrap == ELM_WRAP_MIXED:
             it.content.state = True
         else:
-            it.content.state = False
-
+            it.content.state = False'''
+            
+        it = menu.item_add(None, "Line Numbers", None, self.optionsLineNums)
+        chk = Check(canvas, disabled=True)
+        it.content = chk
+        it.content.state = True
+        
         it = menu.item_add(None, "New Instance", None, self.optionsNew)
         chk = Check(canvas, disabled=True)
         it.content = chk
@@ -795,6 +842,18 @@ class ePadToolbar(Toolbar):
         else:
             it.content.state = False
         resetCloseMenuCount(None)
+    
+    def optionsLineNums(self, obj, it):
+        self._parent.lineNums = not self._parent.lineNums
+        if self._parent.lineNums:
+            it.content.state = True
+            self._parent.lineList.show()
+            self._parent.lineList.size_hint_weight=(0.052, EVAS_HINT_EXPAND)
+            self._parent.checkLineNumbers()
+        else:
+            it.content.state = False
+            self._parent.lineList.size_hint_weight=(0.0, 0.0)
+            self._parent.lineList.hide()
 
 
 class aboutWin(Window):
