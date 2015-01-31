@@ -928,7 +928,7 @@ class CustomFormatter(argparse.HelpFormatter):
 
 class InfoWin(DialogWindow):
     def __init__(self, parent):
-        DialogWindow.__init__(self, parent, 'epad-info', 'ePack', autodel=True)
+        DialogWindow.__init__(self, parent, 'epad-info', 'ePad About', autodel=True)
 
         fr = Frame(self, style='pad_large', size_hint_weight=EXPAND_BOTH,
                    size_hint_align=FILL_BOTH)
