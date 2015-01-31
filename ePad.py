@@ -21,11 +21,54 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.6.0-1"
+__version__ = "0.6.1-1"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
 PY_EFL = "https://git.enlightenment.org/bindings/python/python-efl.git/"
+
+AUTHORS = """
+<br>
+<align=center>
+<hilight>Jeff Hoogland (Jef91)</hilight><br>
+<link><a href=http://www.jeffhoogland.com>Contact</a></link><br><br>
+
+<hilight>Robert Wiley (ylee)</hilight><br><br>
+
+<hilight>Kai Huuhko (kukko)</hilight><br><br>
+</align>
+"""
+
+LICENSE = """
+<align=center>
+<hilight>
+GNU GENERAL PUBLIC LICENSE<br>
+Version 3, 29 June 2007<br><br>
+</hilight>
+
+This program is free software: you can redistribute it and/or modify 
+it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or 
+(at your option) any later version.<br><br>
+
+This program is distributed in the hope that it will be useful, 
+but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+GNU General Public License for more details.<br><br>
+
+You should have received a copy of the GNU General Public License 
+along with this program. If not, see<br>
+<link><a href=http://www.gnu.org/licenses>http://www.gnu.org/licenses/</a></link>
+</align>
+"""
+
+INFO = """
+<align=center>
+<hilight>ePad</hilight> is a simple text editor written in Elementary and Python.<br> 
+<br>
+<br>
+</align>
+"""
 
 
 import argparse
@@ -38,7 +81,7 @@ try:
     from efl import ecore
     from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
     from efl import elementary
-    from efl.elementary.window import StandardWindow, Window
+    from efl.elementary.window import StandardWindow, Window, DialogWindow
     from efl.elementary.window import ELM_WIN_DIALOG_BASIC
     from efl.elementary.background import Background
     from efl.elementary.box import Box
@@ -51,6 +94,7 @@ try:
     from efl.elementary.scroller import Scroller
     from efl.elementary.image import Image
     from efl.elementary.list import List
+    from efl.elementary.frame import Frame
     from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
         markup_to_utf8, ELM_WRAP_NONE, ELM_WRAP_MIXED
     from efl.elementary.popup import Popup
@@ -62,6 +106,9 @@ try:
     from efl.elementary.transit import Transit, \
         ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
     from efl.elementary.check import Check
+    from efl.evas import EXPAND_BOTH, EXPAND_HORIZ, EXPAND_VERT, \
+                FILL_BOTH, FILL_HORIZ, FILL_VERT
+    from efl.ecore import Exe
 
     # Imported here to stop class resolver complaining when an input event
     # applies to an internal layout object
@@ -72,11 +119,7 @@ except ImportError:
     printErr("ImportError: Please install Python-EFL:\n            ", PY_EFL)
     exit(1)
 
-EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
-EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
 EXPAND_NONE = 0.0, 0.0
-FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
-FILL_HORIZ = EVAS_HINT_FILL, 0.5
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
 PADDING = 15, 0
@@ -88,9 +131,11 @@ SHOW_HIDDEN = False
 NEW_INSTANCE = True
 
 
+def xdg_open(url_or_file):
+    Exe('xdg-open "%s"' % url_or_file)
+
 def printErr(*objs):
     print(*objs, file=sys.stderr)
-
 
 def errorPopup(window, errorMsg):
     errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
@@ -222,8 +267,6 @@ class Interface(object):
                 notifyBox.pack_end(notifyLabel)
                 notifyLabel.show()
                 self.mainBox.pack_end(notifyBox)
-        self.about = aboutWin(self, self.mainWindow)
-        self.about.hide()
         # Initialize Text entry box and line label
 
         self.lineList = Entry(self.mainWindow,
@@ -797,7 +840,10 @@ class ePadToolbar(Toolbar):
         # ---------------------------
 
         self.item_append("dialog-information", "About",
-                         lambda self, obj: self._parent.showAbout())
+                         self.showAbout)
+
+    def showAbout(self, obj, it):
+        InfoWin(self)
 
     def optionsWWPress(self, obj, it):
         wordwrap = self._parent.mainEn.line_wrap
@@ -855,129 +901,6 @@ class ePadToolbar(Toolbar):
             self._parent.lineList.size_hint_weight=(0.0, 0.0)
             self._parent.lineList.hide()
 
-
-class aboutWin(Window):
-    def __init__(self, parent, canvas):
-
-        self._parent = parent
-        self._canvas = canvas
-        # Dialog Window Basics
-        self.aboutDialog = Window("epad", ELM_WIN_DIALOG_BASIC)
-        #
-        self.aboutDialog.callback_delete_request_add(self.closeabout)
-        #    Set Dialog background
-        background = Background(self.aboutDialog, size_hint_weight=EXPAND_BOTH)
-        self.aboutDialog.resize_object_add(background)
-        background.show()
-        #
-        mainBox = Box(self.aboutDialog, size_hint_weight=EXPAND_BOTH,
-                      size_hint_align=FILL_BOTH)
-        self.aboutDialog.resize_object_add(mainBox)
-        mainBox.show()
-        #
-        need_ethumb()
-        icon = Icon(self.aboutDialog, thumb='True')
-        icon.standard_set('accessories-text-editor')
-
-        # Using gksudo or sudo fails to load Image here
-        #   unless options specify using preserving their existing environment.
-        #   may also fail to load other icons but does not raise an exception
-        #   in that situation.
-        # Works fine using eSudo as a gksudo alternative,
-        #   other alternatives not tested
-        try:
-            aboutImage = Image(self.aboutDialog, no_scale=True,
-                               size_hint_weight=EXPAND_BOTH,
-                               size_hint_align=FILL_BOTH,
-                               file=icon.file_get())
-            aboutImage.aspect_fixed_set(False)
-
-            mainBox.pack_end(aboutImage)
-            aboutImage.show()
-        except RuntimeError as msg:
-            print("Warning: to run as root please use:\n"
-                  "\t gksudo -k or sudo -E \n"
-                  "Continuing with minor errors ...")
-
-        labelBox = Box(self.aboutDialog, size_hint_weight=EXPAND_NONE)
-        mainBox.pack_end(labelBox)
-        labelBox.show()
-        #    Entry to hold text
-        titleStr = '<br>ePad version <em>{0}</em><br>'.format(__version__)
-        aboutStr = ('<br>A simple text editor written in <br>'
-                    'python and elementary<br>')
-        aboutLbTitle = Label(self.aboutDialog, style='marker')
-        aboutLbTitle.text = titleStr
-        aboutLbTitle.show()
-
-        labelBox.pack_end(aboutLbTitle)
-
-        sep = Separator(self.aboutDialog, horizontal=True)
-        labelBox.pack_end(sep)
-        sep.show()
-
-        aboutText = Label(self.aboutDialog)
-        aboutText.text = aboutStr
-
-        aboutText.show()
-        labelBox.pack_end(aboutText)
-
-        aboutCopyright = Label(self.aboutDialog)
-        aboutCopyright.text = '<b>Copyright</b> © <i>2014 Bodhi Linux</i><br>'
-
-        aboutCopyright.show()
-        labelBox.pack_end(aboutCopyright)
-
-        # Dialog Buttons
-        #    Horizontal Box for Dialog Buttons
-        buttonBox = Box(self.aboutDialog, horizontal=True,
-                        size_hint_weight=EXPAND_HORIZ,
-                        size_hint_align=FILL_BOTH, padding=PADDING)
-        buttonBox.size_hint_weight_set(EVAS_HINT_EXPAND, 0.0)
-        buttonBox.show()
-        labelBox.pack_end(buttonBox)
-        #    Credits Button
-        creditsBtn = Button(self.aboutDialog, text="Credits ",
-                            size_hint_weight=EXPAND_NONE)
-        creditsBtn.callback_clicked_add(self.creditsPress)
-        creditsBtn.show()
-        buttonBox.pack_end(creditsBtn)
-        #    Close Button
-        okBtn = Button(self.aboutDialog, text=" Close ",
-                       size_hint_weight=EXPAND_NONE)
-        okBtn.callback_clicked_add(self.closeabout)
-        okBtn.show()
-        buttonBox.pack_end(okBtn)
-
-        # Ensure the min height
-        self.aboutDialog.resize(300, 100)
-
-    def creditsPress(self, obj):
-        # About popup
-        self.popupAbout = Popup(self.aboutDialog,
-                                size_hint_weight=EXPAND_BOTH)
-
-        self.popupAbout.text = (
-            "Jeff Hoogland &lt;<i>Jef91</i>&gt;<br><br>"
-            "Robert Wiley &lt;<i>ylee</i>&gt;<br><br>"
-            "Kai Huuhko &lt;<i>kuuko</i>&gt;<br>"
-            )
-
-        self.popupAbout.callback_block_clicked_add(self.cb_bnt_close)
-        self.popupAbout.show()
-
-    def cb_bnt_close(self, btn):
-        self.popupAbout.delete()
-
-    def closeabout(self, obj=False, trash=False):
-        self.aboutDialog.hide()
-
-    def launch(self, startingFile=False):
-        center = self._parent.mainWindow.center_get()
-        self.aboutDialog.center_set(center[0], center[1])
-        self.aboutDialog.show()
-
-
 class CustomFormatter(argparse.HelpFormatter):
     def _format_action_invocation(self, action):
         if not action.option_strings:
@@ -1003,6 +926,67 @@ class CustomFormatter(argparse.HelpFormatter):
                 parts[-1] += ' %s' % args_string
             return ', '.join(parts)
 
+class InfoWin(DialogWindow):
+    def __init__(self, parent):
+        DialogWindow.__init__(self, parent, 'epad-info', 'ePack', autodel=True)
+
+        fr = Frame(self, style='pad_large', size_hint_weight=EXPAND_BOTH,
+                   size_hint_align=FILL_BOTH)
+        self.resize_object_add(fr)
+        fr.show()
+
+        hbox = Box(self, horizontal=True, padding=(12,12))
+        fr.content = hbox
+        hbox.show()
+
+        vbox = Box(self, align=(0.0,0.0), padding=(6,6),
+                   size_hint_weight=EXPAND_VERT, size_hint_align=FILL_VERT)
+        hbox.pack_end(vbox)
+        vbox.show()
+
+        # icon + version
+        ic = Icon(self, standard='accessories-text-editor', size_hint_min=(64,64))
+        vbox.pack_end(ic)
+        ic.show()
+
+        lb = Label(self, text=('Version: %s') % __version__)
+        vbox.pack_end(lb)
+        lb.show()
+
+        sep = Separator(self, horizontal=True)
+        vbox.pack_end(sep)
+        sep.show()
+
+        # buttons
+        bt = Button(self, text=('ePad'), size_hint_align=FILL_HORIZ)
+        bt.callback_clicked_add(lambda b: self.entry.text_set(INFO))
+        vbox.pack_end(bt)
+        bt.show()
+
+        bt = Button(self, text=('Website'),size_hint_align=FILL_HORIZ)
+        bt.callback_clicked_add(lambda b: xdg_open(__github__))
+        vbox.pack_end(bt)
+        bt.show()
+
+        bt = Button(self, text=('Authors'), size_hint_align=FILL_HORIZ)
+        bt.callback_clicked_add(lambda b: self.entry.text_set(AUTHORS))
+        vbox.pack_end(bt)
+        bt.show()
+
+        bt = Button(self, text=('License'), size_hint_align=FILL_HORIZ)
+        bt.callback_clicked_add(lambda b: self.entry.text_set(LICENSE))
+        vbox.pack_end(bt)
+        bt.show()
+
+        # main text
+        self.entry = Entry(self, editable=False, scrollable=True, text=INFO,
+                        size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
+        self.entry.callback_anchor_clicked_add(lambda e,i: xdg_open(i.name))
+        hbox.pack_end(self.entry)
+        self.entry.show()
+
+        self.resize(400, 200)
+        self.show()
 
 if __name__ == "__main__":
 
