@@ -39,7 +39,7 @@ AUTHORS = """
 </align>
 """
 
-LICENSE = """
+LICENSE = """<br>
 <align=center>
 <hilight>
 GNU GENERAL PUBLIC LICENSE<br>
@@ -60,6 +60,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see<br>
 <link><a href=http://www.gnu.org/licenses>http://www.gnu.org/licenses/</a></link>
 </align>
+<br>
 """
 
 INFO = """
@@ -77,48 +78,50 @@ import sys
 import os
 import time
 import urllib
-try:
-    from efl import ecore
-    from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
-    from efl import elementary
-    from efl.elementary.window import StandardWindow, Window, DialogWindow
-    from efl.elementary.window import ELM_WIN_DIALOG_BASIC
-    from efl.elementary.background import Background
-    from efl.elementary.box import Box
-    from efl.elementary.button import Button
-    from efl.elementary.label import Label, ELM_WRAP_WORD
-    from efl.elementary.icon import Icon
-    from efl.elementary.need import need_ethumb
-    from efl.elementary.notify import Notify, ELM_NOTIFY_ALIGN_FILL
-    from efl.elementary.separator import Separator
-    from efl.elementary.scroller import Scroller
-    from efl.elementary.image import Image
-    from efl.elementary.list import List
-    from efl.elementary.frame import Frame
-    from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
+
+from efl import ecore
+from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+from efl import elementary
+from efl.elementary.window import StandardWindow, Window
+from efl.elementary.window import ELM_WIN_DIALOG_BASIC
+from efl.elementary.background import Background
+from efl.elementary.box import Box
+from efl.elementary.button import Button
+from efl.elementary.label import Label, ELM_WRAP_WORD
+from efl.elementary.icon import Icon
+from efl.elementary.need import need_ethumb
+from efl.elementary.notify import Notify, ELM_NOTIFY_ALIGN_FILL
+from efl.elementary.separator import Separator
+from efl.elementary.scroller import Scroller
+from efl.elementary.image import Image
+from efl.elementary.list import List
+from efl.elementary.frame import Frame
+from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
         markup_to_utf8, ELM_WRAP_NONE, ELM_WRAP_MIXED
-    from efl.elementary.popup import Popup
-    from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_DEFAULT
-    from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
+from efl.elementary.popup import Popup
+from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_DEFAULT
+from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
         ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
-    from efl.elementary.fileselector import Fileselector
-    from efl.elementary.table import Table
-    from efl.elementary.transit import Transit, \
+from efl.elementary.fileselector import Fileselector
+from efl.elementary.table import Table
+from efl.elementary.transit import Transit, \
         ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
-    from efl.elementary.check import Check
-    from efl.evas import EXPAND_BOTH, EXPAND_HORIZ, EXPAND_VERT, \
-                FILL_BOTH, FILL_HORIZ, FILL_VERT
-    from efl.ecore import Exe
+from efl.elementary.check import Check
+from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+from efl.ecore import Exe
 
-    # Imported here to stop class resolver complaining when an input event
-    # applies to an internal layout object
-    from efl.elementary.layout import Layout
-    # Imported here to stop ValueError exception msgs in Fileselector dialog
-    from efl.elementary.genlist import Genlist
-except ImportError:
-    printErr("ImportError: Please install Python-EFL:\n            ", PY_EFL)
-    exit(1)
+# Imported here to stop class resolver complaining when an input event
+# applies to an internal layout object
+from efl.elementary.layout import Layout
+# Imported here to stop ValueError exception msgs in Fileselector dialog
+from efl.elementary.genlist import Genlist
 
+from elmextensions import AboutWindow
+
+EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
+EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
+FILL_BOTH = EVAS_HINT_FILL, EVAS_HINT_FILL
+FILL_HORIZ = EVAS_HINT_FILL, 0.5
 EXPAND_NONE = 0.0, 0.0
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
@@ -129,10 +132,6 @@ SHOW_POS = True
 NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
-
-
-def xdg_open(url_or_file):
-    Exe('xdg-open "%s"' % url_or_file)
 
 def printErr(*objs):
     print(*objs, file=sys.stderr)
@@ -843,7 +842,10 @@ class ePadToolbar(Toolbar):
                          self.showAbout)
 
     def showAbout(self, obj, it):
-        InfoWin(self)
+        AboutWindow(self, title="ePad", standardicon="accessories-text-editor", \
+                        version=__version__, authors=AUTHORS, \
+                        licen=LICENSE, webaddress=__github__, \
+                        info=INFO)
 
     def optionsWWPress(self, obj, it):
         wordwrap = self._parent.mainEn.line_wrap
@@ -925,68 +927,6 @@ class CustomFormatter(argparse.HelpFormatter):
                     parts.append('%s' % option_string)
                 parts[-1] += ' %s' % args_string
             return ', '.join(parts)
-
-class InfoWin(DialogWindow):
-    def __init__(self, parent):
-        DialogWindow.__init__(self, parent, 'epad-info', 'ePad About', autodel=True)
-
-        fr = Frame(self, style='pad_large', size_hint_weight=EXPAND_BOTH,
-                   size_hint_align=FILL_BOTH)
-        self.resize_object_add(fr)
-        fr.show()
-
-        hbox = Box(self, horizontal=True, padding=(12,12))
-        fr.content = hbox
-        hbox.show()
-
-        vbox = Box(self, align=(0.0,0.0), padding=(6,6),
-                   size_hint_weight=EXPAND_VERT, size_hint_align=FILL_VERT)
-        hbox.pack_end(vbox)
-        vbox.show()
-
-        # icon + version
-        ic = Icon(self, standard='accessories-text-editor', size_hint_min=(64,64))
-        vbox.pack_end(ic)
-        ic.show()
-
-        lb = Label(self, text=('Version: %s') % __version__)
-        vbox.pack_end(lb)
-        lb.show()
-
-        sep = Separator(self, horizontal=True)
-        vbox.pack_end(sep)
-        sep.show()
-
-        # buttons
-        bt = Button(self, text=('ePad'), size_hint_align=FILL_HORIZ)
-        bt.callback_clicked_add(lambda b: self.entry.text_set(INFO))
-        vbox.pack_end(bt)
-        bt.show()
-
-        bt = Button(self, text=('Website'),size_hint_align=FILL_HORIZ)
-        bt.callback_clicked_add(lambda b: xdg_open(__github__))
-        vbox.pack_end(bt)
-        bt.show()
-
-        bt = Button(self, text=('Authors'), size_hint_align=FILL_HORIZ)
-        bt.callback_clicked_add(lambda b: self.entry.text_set(AUTHORS))
-        vbox.pack_end(bt)
-        bt.show()
-
-        bt = Button(self, text=('License'), size_hint_align=FILL_HORIZ)
-        bt.callback_clicked_add(lambda b: self.entry.text_set(LICENSE))
-        vbox.pack_end(bt)
-        bt.show()
-
-        # main text
-        self.entry = Entry(self, editable=False, scrollable=True, text=INFO,
-                        size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
-        self.entry.callback_anchor_clicked_add(lambda e,i: xdg_open(i.name))
-        hbox.pack_end(self.entry)
-        self.entry.show()
-
-        self.resize(400, 200)
-        self.show()
 
 if __name__ == "__main__":
 
