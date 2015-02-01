@@ -679,7 +679,7 @@ class Interface(object):
             fs.populateFiles(self.lastDir)
             # This fails if file_selected does not exist yet
             
-            fs.fileEntry.text = file_selected
+            fs.fileEntry.text = file_selected.split("/")[-1]
 
         IsSave = fs.mode
 
