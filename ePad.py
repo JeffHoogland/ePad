@@ -439,6 +439,8 @@ class Interface(object):
         if self.isSaved is True or ignoreSave is True:
             self.fileSelector.setMode("Open")
             self.fileLabel.text = "<b>Select a text file to open:</b>"
+            if self.fileSelector.filepathEntry.text != self.lastDir:
+                self.fileSelector.populateFiles(self.lastDir)
             self.flip.go(ELM_FLIP_ROTATE_YZ_CENTER_AXIS)
         elif self.confirmPopup is None:
             self.confirmSave(self.openFile)
@@ -482,6 +484,8 @@ class Interface(object):
     def saveAs(self):
         self.fileSelector.setMode("Save")
         self.fileLabel.text = "<b>Save new file to where:</b>"
+        if self.fileSelector.filepathEntry.text != self.lastDir:
+            self.fileSelector.populateFiles(self.lastDir)
         self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
 
     def saveFile(self, obj=False):
@@ -676,7 +680,6 @@ class Interface(object):
         if file_selected:
             print("File Selected: {0}".format(file_selected))
             self.lastDir = os.path.dirname(file_selected)
-            fs.populateFiles(self.lastDir)
             # This fails if file_selected does not exist yet
             
             fs.fileEntry.text = file_selected.split("/")[-1]
@@ -764,7 +767,6 @@ class Interface(object):
         if start and start[1]:
             if os.path.isdir(start[1]):
                 print("Initializing file selection path: {0}".format(start[1]))
-                self.fileSelector.populateFiles(start[1])
                 self.lastDir = start[1]
             else:
                 print("Error: {0} is an Invalid Path".format(start[1]))

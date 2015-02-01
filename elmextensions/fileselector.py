@@ -268,6 +268,8 @@ class FileSelector(Box):
     def populateFiles(self, ourPath):
         self.autocompleteHover.hover_end()
 
+        print "Popping %s"%ourPath
+
         if ourPath[:-1] != "/":
             ourPath = ourPath + "/"
 
