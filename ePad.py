@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.6.1-1"
+__version__ = "0.6.2"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -102,7 +102,6 @@ from efl.elementary.popup import Popup
 from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_DEFAULT
 from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
         ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
-from efl.elementary.fileselector import Fileselector
 from efl.elementary.table import Table
 from efl.elementary.transit import Transit, \
         ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
@@ -113,10 +112,9 @@ from efl.ecore import Exe
 # Imported here to stop class resolver complaining when an input event
 # applies to an internal layout object
 from efl.elementary.layout import Layout
-# Imported here to stop ValueError exception msgs in Fileselector dialog
-from efl.elementary.genlist import Genlist
 
 from elmextensions import AboutWindow
+from elmextensions import FileSelector
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
@@ -309,16 +307,15 @@ class Interface(object):
                                size_hint_align=FILL_BOTH, text="")
         self.fileLabel.show()
         self.lastDir = os.getenv("HOME")
-        self.fileSelector = Fileselector(self.mainWindow, is_save=False,
-                                         expandable=False, folder_only=False,
-                                         hidden_visible=SHOW_HIDDEN,
-                                         path=self.lastDir,
+        self.fileSelector = FileSelector(self.mainWindow,
+                                         defaultPath=self.lastDir,
                                          size_hint_weight=EXPAND_BOTH,
                                          size_hint_align=FILL_BOTH)
-        self.fileSelector.callback_done_add(self.fileSelected)
+        #self.fileSelector.callback_done_add(self.fileSelected)
         self.fileSelector.callback_activated_add(self.fileSelected)
         self.fileSelector.callback_directory_open_add(self.updateLastDir)
-        self.fileSelector.path_set(os.getcwd())
+        self.fileSelector.callback_cancel_add(self.fileSelCancelPressed)
+        self.fileSelector.populateFiles(os.getcwd())
         self.fileSelector.show()
 
         self.fileBox.pack_end(self.fileLabel)
@@ -440,7 +437,7 @@ class Interface(object):
 
     def openFile(self, obj=None, ignoreSave=False):
         if self.isSaved is True or ignoreSave is True:
-            self.fileSelector.is_save_set(False)
+            self.fileSelector.setMode("Open")
             self.fileLabel.text = "<b>Select a text file to open:</b>"
             self.flip.go(ELM_FLIP_ROTATE_YZ_CENTER_AXIS)
         elif self.confirmPopup is None:
@@ -479,8 +476,11 @@ class Interface(object):
         self.confirmPopup.part_content_set("button3", sav_btt)
         self.confirmPopup.show()
 
+    def fileSelCancelPressed(self, fs):
+        self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
+
     def saveAs(self):
-        self.fileSelector.is_save_set(True)
+        self.fileSelector.setMode("Save")
         self.fileLabel.text = "<b>Save new file to where:</b>"
         self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
 
@@ -523,9 +523,9 @@ class Interface(object):
         else:
             file_selected = obj
 
-        IsSave = self.fileSelector.is_save_get()
+        IsSave = self.fileSelector.mode
         if file_selected:
-            if IsSave:
+            if IsSave == "save":
                 try:
                     newfile = open(file_selected, 'w')
                 except IOError as err:
@@ -669,14 +669,14 @@ class Interface(object):
 
     def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
-            self.flip.go(ELM_FLIP_INTERACTION_ROTATE)
+            self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
             # Markup can end up in file names because file_selector name_entry
             #   is an elementary entry. So lets sanitize file_selected.
             file_selected = markup_to_utf8(file_selected)
         if file_selected:
             print("File Selected: {0}".format(file_selected))
             self.lastDir = os.path.dirname(file_selected)
-            fs.path_set(self.lastDir)
+            fs.populateFiles(self.lastDir)
             # This fails if file_selected does not exist yet
             try:
                 fs.selected = file_selected
@@ -684,10 +684,10 @@ class Interface(object):
                 # FIXME: would be nice if I could set fileSelector name entry
                 pass
 
-        IsSave = fs.is_save_get()
+        IsSave = fs.mode
 
         if file_selected:
-            if IsSave:
+            if IsSave == "save":
                 if os.path.isdir(file_selected):
                     current_file = os.path.basename(file_selected)
                     errorMsg = ("<b>'%s'</b> is a folder."
@@ -701,7 +701,7 @@ class Interface(object):
                     return
         self.doSelected(file_selected)
 
-    def updateLastDir(self, fs, path):
+    def updateLastDir(self, path):
         self.lastDir = path
 
     def closeChecks(self, obj):
@@ -767,7 +767,7 @@ class Interface(object):
         if start and start[1]:
             if os.path.isdir(start[1]):
                 print("Initializing file selection path: {0}".format(start[1]))
-                self.fileSelector.path_set(start[1])
+                self.fileSelector.populateFiles(start[1])
                 self.lastDir = start[1]
             else:
                 print("Error: {0} is an Invalid Path".format(start[1]))
