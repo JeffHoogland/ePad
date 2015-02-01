@@ -309,13 +309,13 @@ class Interface(object):
         self.lastDir = os.getenv("HOME")
         self.fileSelector = FileSelector(self.mainWindow,
                                          defaultPath=self.lastDir,
+                                         defaultPopulate=False,
                                          size_hint_weight=EXPAND_BOTH,
                                          size_hint_align=FILL_BOTH)
-        #self.fileSelector.callback_done_add(self.fileSelected)
         self.fileSelector.callback_activated_add(self.fileSelected)
         self.fileSelector.callback_directory_open_add(self.updateLastDir)
         self.fileSelector.callback_cancel_add(self.fileSelCancelPressed)
-        self.fileSelector.populateFiles(os.getcwd())
+        self.fileSelector.setMode("Open")
         self.fileSelector.show()
 
         self.fileBox.pack_end(self.fileLabel)
@@ -678,11 +678,8 @@ class Interface(object):
             self.lastDir = os.path.dirname(file_selected)
             fs.populateFiles(self.lastDir)
             # This fails if file_selected does not exist yet
-            try:
-                fs.selected = file_selected
-            except RuntimeError:
-                # FIXME: would be nice if I could set fileSelector name entry
-                pass
+            
+            fs.fileEntry.text = file_selected
 
         IsSave = fs.mode
 
