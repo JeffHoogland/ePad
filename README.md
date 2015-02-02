@@ -1,12 +1,14 @@
 ePad - a simple text editor written in Elementary and Python
 
-ePad default theme
+ePad Default Theme
 
 ![alt text](http://www.jeffhoogland.com/wp-content/uploads/2010/10/Selection_127.png "ePad Default theme")
 
-Main development now on development branch
+ePad Radiance Theme
 
-TODO List:
+![alt text](http://i.imgur.com/fWF1vEI.png "ePad Radiance Theme")
+
+1.0.0 TODO List:
 - Find/Replace Functions
 - Undo/redo functions
 - Font Selector
@@ -14,7 +16,6 @@ TODO List:
 - Rc config file
 - Optional Menu
 - Optional support for Gtk recently used
-- Internationalization
 
 Credits: 
 - [Jeff Hoogland](http://www.jeffhoogland.com/)
