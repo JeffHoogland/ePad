@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -283,9 +283,9 @@ class Interface(object):
                            size_hint_weight=(0.0, EVAS_HINT_EXPAND),
                            size_hint_align=(0.0, 0.0),
                            line_wrap=ELM_WRAP_NONE)
+        self.lineList.editable_set(False)
+        self.lineList.scrollable_set(False)
         self.lineList.text_style_user_push("DEFAULT='font_size=14'")
-        #self.lineList.editable_set(False)
-        #self.lineList.scrollable_set(False)
         self.currentLinesShown = 1
         self.lineList.text_set("1<br>")
         self.lineList.show()
