@@ -274,8 +274,10 @@ class Interface(object):
 
         # Initialize Text entry box and line label
         self.lineList = Entry(self.mainWindow,
-                           size_hint_weight=(0.052, EVAS_HINT_EXPAND),
+                           size_hint_weight=(0.15, EVAS_HINT_EXPAND),
                            size_hint_align=FILL_BOTH)
+        self.lineList.size_hint_min=(100, 0)
+        self.lineList.size_hint_max=(100, 999999)
         self.lineList.text_style_user_push("DEFAULT='font_size=14'")
         self.lineList.editable_set(False)
         self.currentLinesShown = 1
@@ -345,10 +347,11 @@ class Interface(object):
     def entryInit(self):
         self.mainEn = Entry(self.mainWindow, scrollable=True,
                             line_wrap=self.wordwrap, autosave=False,
-                            size_hint_weight=EXPAND_BOTH,
+                            size_hint_weight=(0.85, EVAS_HINT_EXPAND),
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.elm_event_callback_add(self.eventsCb)
+        self.mainEn.scrollable_set(False)
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
         self.mainEn.text_style_user_push("DEFAULT='font_size=14'")
         # delete line lable if it exist so we can create and add new one
@@ -375,17 +378,29 @@ class Interface(object):
         self.entryBox.pack_end(self.mainEn)
 
     def checkLineNumbers(self):
-        if self.currentLinesShown != self.totalLines:
-            if self.currentLinesShown < self.totalLines:
-                for i in range(self.currentLinesShown, self.totalLines):
-                    linNum = i+1
-                    self.lineList.entry_append("<font_size=14>%s<br>"%linNum)
-            else:
-                self.lineList.entry_set("")
-                for i in range(self.totalLines):
-                    linNum = i+1
-                    self.lineList.entry_append("<font_size=14>%s<br>"%linNum)
+        if self.currentLinesShown < self.totalLines:
+            lines = ""
+            for i in range(self.currentLinesShown+1, self.totalLines+1):
+                lines = "%s%s<br>"%(lines, i)
+            self.lineList.entry_append("%s"%lines)
             self.currentLinesShown = self.totalLines
+        elif self.currentLinesShown > self.totalLines:
+            lengthToCut = 0
+            
+            while self.currentLinesShown > self.totalLines:
+                lengthToCut += 1 + len(str(self.currentLinesShown))
+                self.currentLinesShown -= 1
+            
+            self.lineList.cursor_end_set()
+            
+            totalLines = self.lineList.cursor_pos
+            
+            #print(totalLines)
+            #print(totalLines-lengthToCut)
+            
+            self.lineList.select_region_set(totalLines-lengthToCut , totalLines)
+            self.lineList.selection_cut()
+            
 
     def curChanged(self, entry, label):
         # get linear index into current text
@@ -1043,12 +1058,12 @@ class ePadToolbar(Toolbar):
         self._parent.lineNums = not self._parent.lineNums
         if self._parent.lineNums:
             it.content.state = True
-            self._parent.lineList.show()
-            self._parent.lineList.size_hint_weight=(0.052, EVAS_HINT_EXPAND)
+            self._parent.entryBox.pack_before(self._parent.lineList, self._parent.mainEn)
             self._parent.checkLineNumbers()
+            self._parent.lineList.show()
         else:
             it.content.state = False
-            self._parent.lineList.size_hint_weight=(0.0, 0.0)
+            self._parent.entryBox.unpack(self._parent.lineList)
             self._parent.lineList.hide()
 
 class CustomFormatter(argparse.HelpFormatter):
