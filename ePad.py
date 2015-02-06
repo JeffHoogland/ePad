@@ -814,6 +814,7 @@ class ePadFindBox(Box):
         self.findEntry = Entry(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
         self.findEntry.single_line_set(True)
         self.findEntry.scrollable_set(True)
+        self.findEntry.callback_activated_add(self.findPressed)
         self.findEntry.show()
         
         findBox.content = self.findEntry
@@ -880,9 +881,14 @@ class ePadFindBox(Box):
                         ourRe = re.compile(search_string, re.IGNORECASE)
                     else:
                         ourRe = re.compile(search_string)
-                    tmp_text = str(ourRe.sub(replace_string, tmp_text))
+                    tmp_text = ourRe.sub(replace_string, tmp_text).encode('utf-8').strip()
                     tmp_text = utf8_to_markup(tmp_text)
+                    curPos = self._parent.mainEn.cursor_pos_get()
                     self._parent.mainEn.text_set(tmp_text)
+                    try:
+                        self._parent.mainEn.cursor_pos_set(curPos)
+                    except:
+                        print("Error: Can't set cursor position")
                     self._parent.textEdited()
                 else:
                     errorPopup(self._parent.mainWindow, "Text %s not found. Nothing replaced."%search_string)
