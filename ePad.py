@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.6.2"
+__version__ = "0.7.0"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -78,6 +78,7 @@ import sys
 import os
 import time
 import urllib
+import re
 
 from efl import ecore
 from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
@@ -94,10 +95,11 @@ from efl.elementary.notify import Notify, ELM_NOTIFY_ALIGN_FILL
 from efl.elementary.separator import Separator
 from efl.elementary.scroller import Scroller
 from efl.elementary.image import Image
+from efl.elementary.frame import Frame
 from efl.elementary.list import List
 from efl.elementary.frame import Frame
 from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
-        markup_to_utf8, ELM_WRAP_NONE, ELM_WRAP_MIXED
+        markup_to_utf8, utf8_to_markup, ELM_WRAP_NONE, ELM_WRAP_MIXED
 from efl.elementary.popup import Popup
 from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_DEFAULT
 from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
@@ -123,6 +125,7 @@ FILL_HORIZ = EVAS_HINT_FILL, 0.5
 EXPAND_NONE = 0.0, 0.0
 ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
+ALIGN_LEFT = 0.0, 0.5
 PADDING = 15, 0
 # User options
 WORD_WRAP = ELM_WRAP_NONE
@@ -264,8 +267,12 @@ class Interface(object):
                 notifyBox.pack_end(notifyLabel)
                 notifyLabel.show()
                 self.mainBox.pack_end(notifyBox)
-        # Initialize Text entry box and line label
 
+        self.findBox = ePadFindBox(self, self.mainWindow)
+        self.findVisible = False
+        self.findBox.elm_event_callback_add(self.eventsCb)
+
+        # Initialize Text entry box and line label
         self.lineList = Entry(self.mainWindow,
                            size_hint_weight=(0.052, EVAS_HINT_EXPAND),
                            size_hint_align=FILL_BOTH)
@@ -394,7 +401,7 @@ class Interface(object):
         # Update label text with line, col
         label.text = "Ln {0} Col {1} ".format(line, col)
 
-    def textEdited(self, obj):
+    def textEdited(self, obj=None):
         current_file = self.mainEn.file[0]
         current_file = \
             os.path.basename(current_file) if \
@@ -480,6 +487,23 @@ class Interface(object):
 
     def fileSelCancelPressed(self, fs):
         self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
+        
+    def showFind(self, obj=None, display=False):
+        if not self.findVisible:
+            self.mainBox.pack_before(self.findBox, self.scr)
+            self.findBox.findEntry.text = self.mainEn.selection_get()
+            self.findBox.findEntry.focus_set(True)
+            self.findBox.findEntry.cursor_end_set()
+            self.findBox.show()
+            self.findVisible = True
+        elif not display:
+            self.hideFind()
+    
+    def hideFind(self, obj=None):
+        if self.findVisible:
+            self.mainBox.unpack(self.findBox)
+            self.findBox.hide()
+            self.findVisible = False
 
     def saveAs(self):
         self.fileSelector.setMode("Save")
@@ -738,20 +762,8 @@ class Interface(object):
                     toggleHidden(self.fileSelector)
             elif event.key.lower() == "q":
                 closeCtrlChecks(self)
-
-    # Legacy hack no longer needed
-    #  there was an issue in elementary entry where it would
-    #  accept those character controls
-
-    # def textFilter( self, obj, theText, data ):
-    #    # Block ctrl+hot keys used in eventsCb
-    #    #
-    #    #             Ctrl O   Ctrl N   Ctrl S
-    #    ctrl_block = [chr(14), chr(15), chr(19)]
-    #    if theText in ctrl_block:
-    #        return None
-    #    else:
-    #        return theText
+            elif event.key.lower() == "f":
+                self.showFind(display=True)
 
     def launch(self, start=[]):
         if start and start[0] and os.path.dirname(start[0]) == '':
@@ -772,7 +784,141 @@ class Interface(object):
                 print("Error: {0} is an Invalid Path".format(start[1]))
         self.mainWindow.show()
 
-
+class ePadFindBox(Box):
+    def __init__(self, parent, canvas):
+        Box.__init__(self, canvas)
+        self._parent = parent
+        self._canvas = canvas
+        
+        self.size_hint_weight = EXPAND_HORIZ
+        self.size_hint_align = FILL_HORIZ
+        
+        self.currentFind = None
+        self.lastSearch = None
+        
+        frameBox = Box(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
+        frameBox.horizontal = True
+        frameBox.show()
+        
+        findBox = Frame(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
+        findBox.text = "Find Text:"
+        findBox.show()
+        
+        self.findEntry = Entry(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
+        self.findEntry.single_line_set(True)
+        self.findEntry.scrollable_set(True)
+        self.findEntry.show()
+        
+        findBox.content = self.findEntry
+        
+        replaceBox = Frame(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
+        replaceBox.text = "Replace Text:"
+        replaceBox.show()
+        
+        self.replaceEntry = Entry(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
+        self.replaceEntry.single_line_set(True)
+        self.replaceEntry.scrollable_set(True)
+        self.replaceEntry.show()
+        
+        replaceBox.content = self.replaceEntry
+        
+        frameBox.pack_end(findBox)
+        frameBox.pack_end(replaceBox)
+        
+        buttonBox = Box(self._canvas, size_hint_weight=EXPAND_HORIZ, size_hint_align=FILL_HORIZ)
+        buttonBox.horizontal = True
+        buttonBox.show()
+        
+        findButton = Button(self._canvas)
+        findButton.text = "Find Next"
+        findButton.callback_pressed_add(self.findPressed)
+        findButton.show()
+        
+        replaceButton = Button(self._canvas)
+        replaceButton.text = "Replace All"
+        replaceButton.callback_pressed_add(self.replacePressed)
+        replaceButton.show()
+        
+        closeButton = Button(self._canvas)
+        closeButton.text = "Done"
+        closeButton.callback_pressed_add(self._parent.showFind)
+        closeButton.show()
+        
+        self.caseCheck = Check(self._canvas)
+        self.caseCheck.text = "Case Sensitive"
+        self.caseCheck.show()
+        
+        buttonBox.pack_end(self.caseCheck)
+        buttonBox.pack_end(findButton)
+        buttonBox.pack_end(replaceButton)
+        buttonBox.pack_end(closeButton)
+        
+        self.pack_end(frameBox)
+        self.pack_end(buttonBox)
+        
+    def replacePressed(self, obj):
+        tmp_text = markup_to_utf8(self._parent.mainEn.entry_get())
+        if not self.caseCheck.state_get():
+            search_string = self.findEntry.text.lower()
+            locations = list(self.findAll(tmp_text.lower(), search_string))
+        else:
+            search_string = self.findEntry.text
+            locations = list(self.findAll(tmp_text, search_string))
+        search_length = len(search_string)
+        if search_length:
+            replace_string = self.replaceEntry.text
+            if replace_string:
+                if len(locations):
+                    if not self.caseCheck.state_get():
+                        ourRe = re.compile(search_string, re.IGNORECASE)
+                    else:
+                        ourRe = re.compile(search_string)
+                    tmp_text = str(ourRe.sub(replace_string, tmp_text))
+                    tmp_text = utf8_to_markup(tmp_text)
+                    self._parent.mainEn.text_set(tmp_text)
+                    self._parent.textEdited()
+                else:
+                    errorPopup(self._parent.mainWindow, "Text %s not found. Nothing replaced."%search_string)
+            else:
+                errorPopup(self._parent.mainWindow, "No replacement string entered.")
+        else:
+            errorPopup(self._parent.mainWindow, "No find string entered.")
+    
+    def findPressed(self, obj):
+        if not self.caseCheck.state_get():
+            search_string = self.findEntry.text.lower()
+            tmp_text = markup_to_utf8(self._parent.mainEn.entry_get()).lower()
+        else:
+            search_string = self.findEntry.text
+            tmp_text = markup_to_utf8(self._parent.mainEn.entry_get())
+        search_length = len(search_string)
+        if search_length:
+            locations = list(self.findAll(tmp_text, search_string))
+            if len(locations):
+                if self.currentFind == None or search_string != self.lastSearch:
+                    self.lastSearch = search_string
+                    self.currentFind = locations[0]
+                else:
+                    lastFind = locations.index(self.currentFind)
+                    if lastFind < len(locations)-1:
+                        self.currentFind = locations[lastFind+1]
+                    else:
+                        self.currentFind = locations[0]
+                self._parent.mainEn.select_region_set(self.currentFind, self.currentFind+search_length)
+            else:
+                errorPopup(self._parent.mainWindow, "Text %s not found."%search_string)
+        else:
+            errorPopup(self._parent.mainWindow, "No find string entered.")
+        
+    
+    def findAll(self, a_str, sub):
+        start = 0
+        while True:
+            start = a_str.find(sub, start)
+            if start == -1: return
+            yield start
+            start += len(sub) + 1
+    
 class ePadToolbar(Toolbar):
     def __init__(self, parent, canvas):
         Toolbar.__init__(self, canvas)
@@ -805,6 +951,9 @@ class ePadToolbar(Toolbar):
         menu.item_separator_add()
         menu.item_add(None, "Select All", "edit-select-all",
                       self.selectAllPress)
+        
+        self.item_append("gtk-find", "Find",
+                         lambda self, obj: self._parent.showFind())
         # -----------------------
         #
         # -- Options Dropdown Menu --

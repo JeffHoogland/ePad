@@ -9,7 +9,6 @@ ePad Radiance Theme
 ![alt text](http://i.imgur.com/fWF1vEI.png "ePad Radiance Theme")
 
 1.0.0 TODO List:
-- Find/Replace Functions
 - Undo/redo functions
 - Font Selector
 - Options Selector
