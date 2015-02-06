@@ -1,12 +1,6 @@
 ePad - a simple text editor written in Elementary and Python
 
-ePad Default Theme
-
-![alt text](http://www.jeffhoogland.com/wp-content/uploads/2010/10/Selection_127.png "ePad Default theme")
-
-ePad Radiance Theme
-
-![alt text](http://i.imgur.com/fWF1vEI.png "ePad Radiance Theme")
+![alt text](http://i.imgur.com/em0WgkY.png "ePad")
 
 1.0.0 TODO List:
 - Undo/redo functions
