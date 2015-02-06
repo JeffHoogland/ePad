@@ -272,25 +272,25 @@ class Interface(object):
         self.findVisible = False
         self.findBox.elm_event_callback_add(self.eventsCb)
 
-        # Initialize Text entry box and line label
-        self.lineList = Entry(self.mainWindow,
-                           size_hint_weight=(0.15, EVAS_HINT_EXPAND),
-                           size_hint_align=FILL_BOTH)
-        self.lineList.size_hint_min=(100, 0)
-        self.lineList.size_hint_max=(100, 999999)
-        self.lineList.text_style_user_push("DEFAULT='font_size=14'")
-        self.lineList.editable_set(False)
-        self.currentLinesShown = 1
-        self.lineList.entry_append("<font_size=14>1<br>")
-        self.lineList.show()
-        
-        self.lineNums = True
-
         self.entryBox = Box(self.mainWindow,
                            size_hint_weight=EXPAND_BOTH,
                            size_hint_align=FILL_BOTH)
         self.entryBox.horizontal = True
         self.entryBox.show()
+
+        # Initialize Text entry box and line label
+        self.lineList = Entry(self.mainWindow,
+                           size_hint_weight=(0.0, EVAS_HINT_EXPAND),
+                           size_hint_align=(0.0, 0.0),
+                           line_wrap=ELM_WRAP_NONE)
+        #self.lineList.text_style_user_push("DEFAULT='font_size=14'")
+        #self.lineList.editable_set(False)
+        #self.lineList.scrollable_set(False)
+        self.currentLinesShown = 1
+        self.lineList.text_set("<font_size=14>1<br>")
+        self.lineList.show()
+        
+        self.lineNums = True
         
         self.scr = Scroller(self.mainWindow,
                            size_hint_weight=EXPAND_BOTH,
@@ -401,6 +401,8 @@ class Interface(object):
             self.lineList.select_region_set(totalLines-lengthToCut , totalLines)
             self.lineList.selection_cut()
             
+            self.mainEn.select_region_set(self.mainEn.cursor_pos, self.mainEn.cursor_pos)
+            self.mainEn.selection_cut()
 
     def curChanged(self, entry, label):
         # get linear index into current text
