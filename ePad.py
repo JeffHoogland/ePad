@@ -283,11 +283,11 @@ class Interface(object):
                            size_hint_weight=(0.0, EVAS_HINT_EXPAND),
                            size_hint_align=(0.0, 0.0),
                            line_wrap=ELM_WRAP_NONE)
-        #self.lineList.text_style_user_push("DEFAULT='font_size=14'")
+        self.lineList.text_style_user_push("DEFAULT='font_size=14'")
         #self.lineList.editable_set(False)
         #self.lineList.scrollable_set(False)
         self.currentLinesShown = 1
-        self.lineList.text_set("<font_size=14>1<br>")
+        self.lineList.text_set("1<br>")
         self.lineList.show()
         
         self.lineNums = True
@@ -385,25 +385,15 @@ class Interface(object):
             self.lineList.entry_append("%s"%lines)
             self.currentLinesShown = self.totalLines
         elif self.currentLinesShown > self.totalLines:
-            lengthToCut = 0
+            lines = ""
             
-            while self.currentLinesShown > self.totalLines:
-                lengthToCut += 1 + len(str(self.currentLinesShown))
-                self.currentLinesShown -= 1
+            for i in range(1, self.totalLines+1):
+                lines = "%s%s<br>"%(lines, i)
             
-            self.lineList.cursor_end_set()
+            self.lineList.entry_set(lines)
             
-            totalLines = self.lineList.cursor_pos
+            self.currentLinesShown = self.totalLines
             
-            #print(totalLines)
-            #print(totalLines-lengthToCut)
-            
-            self.lineList.select_region_set(totalLines-lengthToCut , totalLines)
-            self.lineList.selection_cut()
-            
-            self.mainEn.select_region_set(self.mainEn.cursor_pos, self.mainEn.cursor_pos)
-            self.mainEn.selection_cut()
-
     def curChanged(self, entry, label):
         # get linear index into current text
         index = entry.cursor_pos_get()
