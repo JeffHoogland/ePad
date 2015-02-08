@@ -279,12 +279,11 @@ class Interface(object):
         self.entryBox.show()
 
         # Initialize Text entry box and line label
-        self.lineList = Entry(self.mainWindow,
+        self.lineList = Entry(self.mainWindow, 
+                           scrollable=False, editable=False,
                            size_hint_weight=(0.0, EVAS_HINT_EXPAND),
                            size_hint_align=(0.0, 0.0),
                            line_wrap=ELM_WRAP_NONE)
-        self.lineList.editable_set(False)
-        self.lineList.scrollable_set(False)
         self.lineList.text_style_user_push("DEFAULT='font_size=14'")
         self.currentLinesShown = 1
         self.lineList.text_set("1<br>")
@@ -345,13 +344,12 @@ class Interface(object):
         self.fileExistsFlag = False
 
     def entryInit(self):
-        self.mainEn = Entry(self.mainWindow, scrollable=True,
+        self.mainEn = Entry(self.mainWindow, scrollable=False,
                             line_wrap=self.wordwrap, autosave=False,
                             size_hint_weight=(0.85, EVAS_HINT_EXPAND),
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.elm_event_callback_add(self.eventsCb)
-        self.mainEn.scrollable_set(False)
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
         self.mainEn.text_style_user_push("DEFAULT='font_size=14'")
         # delete line lable if it exist so we can create and add new one
