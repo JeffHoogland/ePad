@@ -4,13 +4,9 @@ ePad - a simple text editor written in Elementary and Python
 
 1.0.0 TODO List:
 - Undo/redo functions
-- Font Selector
 - Options Selector
 - Rc config file
-- Optional Menu
-- Optional support for Gtk recently used
-
-Credits: 
+ Credits: 
 - [Jeff Hoogland](http://www.jeffhoogland.com/)
 - [Robert Wiley](https://github.com/rbtylee)
 - [Kai Huuhko](https://github.com/kaihu)

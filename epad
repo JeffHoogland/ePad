@@ -19,4 +19,4 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-python /usr/share/epad/ePad.py $1
+python /usr/share/epad/ePad.py $@
