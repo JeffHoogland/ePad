@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -249,6 +249,7 @@ class Interface(object):
         self.isNewFile = False
         self.confirmPopup = None
         self.lineNums = True
+        self.keysDown = []
         
         self.mainWindow = StandardWindow("epad", "Untitled - ePad",
                                          size=(600, 400))
@@ -607,22 +608,37 @@ class Interface(object):
         self.confirmPopup.show()
 
     def eventsCb(self, obj, src, event_type, event):
-        if event.modifier_is_set("Control"):
-            if event.key.lower() == "n":
-                newFile(self.newFile)
-            elif event.key.lower() == "s" and event.modifier_is_set("Shift"):
-                self.saveAs()
-            elif event.key.lower() == "s":
-                self.saveFile()
-            elif event.key.lower() == "o":
-                self.openFile()
-            elif event.key.lower() == "h":
-                if not self.flip.front_visible_get():
-                    toggleHidden(self.fileSelector)
-            elif event.key.lower() == "q":
-                closeCtrlChecks(self)
-            elif event.key.lower() == "f":
-                toggleFind(self)
+        #print(obj)
+        #print(src)
+        #print(event)
+        #print(event_type)
+        #print("")
+        if event_type == 10 and event.key.lower() not in self.keysDown:
+            print("Key going down")
+            self.keysDown.append(event.key.lower())
+            if event.modifier_is_set("Control"):
+                if event.key.lower() == "n":
+                    #newFile(self.newFile)
+                    self.newFile()
+                elif event.key.lower() == "s" and event.modifier_is_set("Shift"):
+                    self.saveAs()
+                elif event.key.lower() == "s":
+                    self.saveFile()
+                elif event.key.lower() == "o":
+                    self.openFile()
+                elif event.key.lower() == "h":
+                    if not self.flip.front_visible_get():
+                        #toggleHidden(self.fileSelector)
+                        self.fileSelector.toggleHidden()
+                elif event.key.lower() == "q":
+                    #closeCtrlChecks(self)
+                    self.closeChecks()
+                elif event.key.lower() == "f":
+                    #toggleFind(self)
+                    self.showFind()
+        elif event_type == 11 and event.key.lower() in self.keysDown:
+            print("Key coming up")
+            del self.keysDown[self.keysDown.index(event.key.lower())]
 
     def launch(self, start=[]):
         if start[0]:
