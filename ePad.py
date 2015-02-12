@@ -650,6 +650,7 @@ class Interface(object):
             for count, ourFile in enumerate(start[0]):
                 if os.path.isdir(os.path.dirname(ourFile)):
                     if os.path.isfile(ourFile):
+                        #print(ourFile)
                         self.addFile(ourFile)
                 else:
                     print("Error: {0} is an Invalid Path".format(ourFile))
@@ -780,7 +781,10 @@ class ePadEntry(Box):
         self.isSaved = False
     
     def openFile(self, filePath):
-        self.mainEn.file_set(filePath, ELM_TEXT_FORMAT_PLAIN_UTF8)
+        try:
+            self.mainEn.file_set(filePath, ELM_TEXT_FORMAT_PLAIN_UTF8)
+        except RuntimeError as msg:
+            print("Empty file: {0}".format(filePath))
         self.isNewFile = False
     
     def setWidgets(self, btn, cls, sep):
@@ -1266,7 +1270,7 @@ if __name__ == "__main__":
     #Remove ePad.py from the arguments
     del ourFiles[0]
     
-    print(ourFiles)
+    #print(ourFiles)
 
     # Start App
     elementary.init()
