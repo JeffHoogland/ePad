@@ -1262,8 +1262,9 @@ class ePadToolbar(Toolbar):
 if __name__ == "__main__":
 
     ourFiles = sys.argv
-    if ourFiles[0] == "ePad.py":
-        del ourFiles[0]
+    
+    #Remove ePad.py from the arguments
+    del ourFiles[0]
     
     print(ourFiles)
 
