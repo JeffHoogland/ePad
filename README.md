@@ -6,7 +6,8 @@ ePad - a simple text editor written in Elementary and Python
 - Undo/redo functions
 - Options Selector
 - Rc config file
- Credits: 
+
+Credits: - 
 - [Jeff Hoogland](http://www.jeffhoogland.com/)
 - [Robert Wiley](https://github.com/rbtylee)
 - [Kai Huuhko](https://github.com/kaihu)
