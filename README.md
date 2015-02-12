@@ -8,7 +8,6 @@ Requires:
 - [elmextensions](https://github.com/JeffHoogland/python-elm-extensions)
 
 1.0.0 TODO List:
-- Undo/redo functions
 - Options Selector
 - Rc config file
 
@@ -16,3 +15,4 @@ Credits:
 - [Jeff Hoogland](http://www.jeffhoogland.com/)
 - [Robert Wiley](https://github.com/rbtylee)
 - [Kai Huuhko](https://github.com/kaihu)
+- [Scimmia22](https://github.com/Scimmia22)

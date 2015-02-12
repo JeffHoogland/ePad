@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'https://github.com/JeffHoogland/ePad'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -186,43 +186,14 @@ def errorPopup(window, errorMsg):
     errorPopup.part_content_set("button3", ok_btt)
     errorPopup.show()
 
-def newFile(callNew):
-    if not hasattr(newFile, 'count'):
-        newFile.count = 0
-    if newFile.count == 0:
-        callNew()
-    #print(newFile.count)
-    newFile.count = (newFile.count + 1) % 3
-
-def toggleHidden(fileSelector):
-    if not hasattr(toggleHidden, 'count'):
-        toggleHidden.count = 0
-    if toggleHidden.count == 0:
-        fileSelector.toggleHidden()
-    # Modulo 2 Hack because this function is called
-    #   two times each time Ctrl-h is pressed
-    #print("%s"%toggleHidden.count)
-    toggleHidden.count = (toggleHidden.count + 1) % 2
-
-def toggleFind(win):
-    if not hasattr(toggleFind, 'count'):
-        toggleFind.count = 0
-    if toggleFind.count == 0:
-        win.showFind()
-    # Modulo 3 Hack because this function is called
-    #   three times each time Ctrl-f is pressed
-    #print("%s"%toggleFind.count)
-    toggleFind.count = (toggleFind.count + 1) % 3
-
-# Same Modulo 4 Hack because this function is called
-    #   four times each time Ctrl-q is pressed
-def closeCtrlChecks(win):
-    if not hasattr(closeCtrlChecks, 'count'):
-        closeCtrlChecks.count = 0
-    if closeCtrlChecks.count == 0:
-        win.closeChecks(win)
-    closeCtrlChecks.count = (closeCtrlChecks.count + 1) % 2
-
+#A hack to work around elm keypress sucking a fat one
+def threeCount(ourCallback):
+    if not hasattr(threeCount, 'count'):
+        threeCount.count = 0
+    if threeCount.count == 0:
+        ourCallback()
+    #print(threeCount.count)
+    threeCount.count = (threeCount.count + 1) % 3
 
 def closeMenu(obj, label):
     if not hasattr(closeMenu, 'count'):
@@ -249,12 +220,12 @@ class Interface(object):
         self.isNewFile = False
         self.confirmPopup = None
         self.lineNums = True
-        self.keysDown = []
         
         self.mainWindow = StandardWindow("epad", "Untitled - ePad",
                                          size=(600, 400))
         self.mainWindow.callback_delete_request_add(self.closeChecks)
         self.mainWindow.elm_event_callback_add(self.eventsCb)
+        #self.mainWindow.repeat_events_set(False)
 
         icon = Icon(self.mainWindow,
                     size_hint_weight=EXPAND_BOTH,
@@ -610,35 +581,42 @@ class Interface(object):
     def eventsCb(self, obj, src, event_type, event):
         #print(obj)
         #print(src)
-        #print(event)
+        #print(event.key.lower())
         #print(event_type)
         #print("")
-        if event_type == 10 and event.key.lower() not in self.keysDown:
-            #print("Key going down")
-            self.keysDown.append(event.key.lower())
-            if event.modifier_is_set("Control"):
-                if event.key.lower() == "n":
-                    #newFile(self.newFile)
-                    self.newFile()
-                elif event.key.lower() == "s" and event.modifier_is_set("Shift"):
-                    self.saveAs()
-                elif event.key.lower() == "s":
-                    self.saveFile()
-                elif event.key.lower() == "o":
-                    self.openFile()
-                elif event.key.lower() == "h":
-                    if not self.flip.front_visible_get():
-                        #toggleHidden(self.fileSelector)
-                        self.fileSelector.toggleHidden()
-                elif event.key.lower() == "q":
-                    #closeCtrlChecks(self)
-                    self.closeChecks()
-                elif event.key.lower() == "f":
-                    #toggleFind(self)
-                    self.showFind()
-        elif event_type == 11 and event.key.lower() in self.keysDown:
-            #print("Key coming up")
-            del self.keysDown[self.keysDown.index(event.key.lower())]
+        
+        try:
+            event.key
+        except:
+            return False
+        
+        if event.modifier_is_set("Control"):
+            if event.key.lower() == "n":
+                #newFile(self.newFile)
+                threeCount(self.newFile)
+            elif event.key.lower() == "s" and event.modifier_is_set("Shift"):
+                self.saveAs()
+            elif event.key.lower() == "s":
+                self.saveFile()
+            elif event.key.lower() == "z" and event.modifier_is_set("Shift"):
+                threeCount(self.entryBox.reDo)
+            elif event.key.lower() == "z":
+                threeCount(self.entryBox.unDo)
+            elif event.key.lower() == "o":
+                self.openFile()
+            elif event.key.lower() == "h":
+                if not self.flip.front_visible_get():
+                    #toggleHidden(self.fileSelector)
+                    threeCount(self.fileSelector.toggleHidden)
+            elif event.key.lower() == "q":
+                #closeCtrlChecks(self)
+                threeCount(self.closeChecks)
+            elif event.key.lower() == "f":
+                #toggleFind(self)
+                threeCount(self.showFind)
+            
+        if event.key.lower() in ["space", "backspace", "return"]:
+            threeCount(self.entryBox.takeSnapShot)
 
     def launch(self, start=[]):
         if start[0]:
@@ -702,6 +680,8 @@ class ePadEntry(Box):
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
+        self.mainEn.callback_selection_cut_add(self.takeSnapShot)
+        self.mainEn.callback_selection_paste_add(self.takeSnapShot)
         self.mainEn.text_style_user_push("DEFAULT='font_size=14'")
         
         self.totalLines = 0
@@ -738,6 +718,50 @@ class ePadEntry(Box):
         self.sep = None
         self.isNewFile = True
         self.isSaved = True
+        self.doArchive = []
+        self.doSpot = 0
+        self.takeSnapShot()
+    
+    def takeSnapShot(self, obj=None):
+        if self.doSpot != len(self.doArchive)-1:
+            for i in range(self.doSpot+1, len(self.doArchive)):
+                self.doArchive.pop(self.doSpot+1)
+            
+        curPos = self.mainEn.cursor_pos_get()
+        entryGet = self.mainEn.entry_get()
+        
+        if self.doSpot == 0:
+            self.saveSnapShot(curPos, entryGet)
+        elif entryGet != self.doArchive[self.doSpot][1]:
+            self.saveSnapShot(curPos, entryGet)
+    
+    def saveSnapShot(self, curPos, entryGet):
+        self.doArchive.append([curPos, entryGet])
+            
+        if len(self.doArchive) > 30:
+            self.doArchive.pop(0)
+            
+        self.doSpot = len(self.doArchive) - 1
+            
+        #print("Taking snapshot")
+    
+    def unDo(self):
+        if self.doSpot > 0:
+            #A check if this is the first time we are undoing that we store the latest data
+            if self.doSpot == len(self.doArchive) - 1:
+                if self.doArchive[self.doSpot][1] != self.mainEn.entry_get():
+                    self.takeSnapShot()
+            #print("undoing")
+            self.doSpot -= 1
+            self.mainEn.entry_set(self.doArchive[self.doSpot][1])
+            self.mainEn.cursor_pos_set(self.doArchive[self.doSpot][0])
+    
+    def reDo(self):
+        if self.doSpot + 1 < len(self.doArchive):
+            #print("redoing")
+            self.doSpot += 1
+            self.mainEn.entry_set(self.doArchive[self.doSpot][1])
+            self.mainEn.cursor_pos_set(self.doArchive[self.doSpot][0])
     
     def checkLineNumbers(self):
         if self.currentLinesShown < self.totalLines:
@@ -786,6 +810,10 @@ class ePadEntry(Box):
         except RuntimeError as msg:
             print("Empty file: {0}".format(filePath))
         self.isNewFile = False
+        #Reset undo/redo tracks when we open a file
+        self.doArchive = []
+        self.doSpot = 0
+        self.takeSnapShot()
     
     def setWidgets(self, btn, cls, sep):
         self.button = btn
@@ -1085,7 +1113,8 @@ class ePadFindBox(Box):
                         self._parent.entryBox.mainEn.cursor_pos_set(curPos)
                     except:
                         print("Error: Can't set cursor position")
-                    self._parent.textEdited()
+                    self._parent.entryBox.textEdited()
+                    self._parent.entryBox.takeSnapShot()
                 else:
                     errorPopup(self._parent.mainWindow, "Text %s not found. Nothing replaced."%search_string)
             else:
@@ -1151,9 +1180,12 @@ class ePadToolbar(Toolbar):
         self.item_append("document-save-as", "Save As",
                          lambda self, obj: self._parent.saveAs())
         # -- Edit Dropdown Menu --
-        tb_it = self.item_append("edit", "Edit")
+        tb_it = self.item_append("gtk-edit", "Edit")
         tb_it.menu = True
         menu = tb_it.menu
+        menu.item_add(None, "Undo", "edit-undo", self.unDoPress)
+        menu.item_add(None, "Redo", "edit-redo", self.reDoPress)
+        menu.item_separator_add()
         menu.item_add(None, "Copy", "edit-copy", self.copyPress)
         menu.item_add(None, "Paste", "edit-paste", self.pastePress)
         menu.item_add(None, "Cut", "edit-cut", self.cutPress)
@@ -1205,20 +1237,26 @@ class ePadToolbar(Toolbar):
                         info=INFO)
 
     def optionsWWPress(self, obj, it):
-        wordwrap = self._parent.mainEn.line_wrap
+        wordwrap = self._parent.entryBox.mainEn.line_wrap
         if wordwrap == ELM_WRAP_MIXED:
             wordwrap = ELM_WRAP_NONE
             it.content.state = False
         else:
             wordwrap = ELM_WRAP_MIXED
             it.content.state = True
-        self._parent.mainEn.line_wrap = wordwrap
-        # FIXME: is this variable needed for anything?
-        self._parent.wordwrap = wordwrap
+        self._parent.entryBox.mainEn.line_wrap = wordwrap
+        resetCloseMenuCount(None)
+
+    def unDoPress(self, obj, it):
+        self._parent.entryBox.unDo()
+        resetCloseMenuCount(None)
+    
+    def reDoPress(self, obj, it):
+        self._parent.entryBox.reDo()
         resetCloseMenuCount(None)
 
     def copyPress(self, obj, it):
-        self._parent.mainEn.selection_copy()
+        self._parent.entryBox.mainEn.selection_copy()
         resetCloseMenuCount(None)
 
     def itemClicked(self, obj):
@@ -1229,15 +1267,15 @@ class ePadToolbar(Toolbar):
             closeMenu(item, item.text_get())
 
     def pastePress(self, obj, it):
-        self._parent.mainEn.selection_paste()
+        self._parent.entryBox.mainEn.selection_paste()
         resetCloseMenuCount(None)
 
     def cutPress(self, obj, it):
-        self._parent.mainEn.selection_cut()
+        self._parent.entryBox.mainEn.selection_cut()
         resetCloseMenuCount(None)
 
     def selectAllPress(self, obj, it):
-        self._parent.mainEn.select_all()
+        self._parent.entryBox.mainEn.select_all()
         resetCloseMenuCount(None)
 
     def optionsNew(self, obj, it):
