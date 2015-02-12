@@ -614,7 +614,7 @@ class Interface(object):
         #print(event_type)
         #print("")
         if event_type == 10 and event.key.lower() not in self.keysDown:
-            print("Key going down")
+            #print("Key going down")
             self.keysDown.append(event.key.lower())
             if event.modifier_is_set("Control"):
                 if event.key.lower() == "n":
@@ -637,7 +637,7 @@ class Interface(object):
                     #toggleFind(self)
                     self.showFind()
         elif event_type == 11 and event.key.lower() in self.keysDown:
-            print("Key coming up")
+            #print("Key coming up")
             del self.keysDown[self.keysDown.index(event.key.lower())]
 
     def launch(self, start=[]):
