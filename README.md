@@ -1,6 +1,6 @@
 ePad - a simple text editor written in Elementary and Python
 
-![alt text](http://i.imgur.com/u0vDjlE.png "ePad")
+![alt text](http://i.imgur.com/Hrtqkgl.png "ePad")
 
 Requires:
 - [python 2.7](https://www.python.org/)
