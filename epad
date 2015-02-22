@@ -627,7 +627,7 @@ class Interface(object):
         if start and start[0]:
             for ourFile in start[0]:
                 if ourFile[:7] == "file://":
-                    ourFile = ourFile[7:]
+                    ourFile = urllib.url2pathname(ourFile[7:])
                 if os.path.isdir(os.path.dirname(ourFile)):
                     if os.path.isfile(ourFile):
                         #print(ourFile)
