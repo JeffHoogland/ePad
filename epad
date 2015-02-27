@@ -1178,6 +1178,7 @@ class ePadToolbar(Toolbar):
         self.size_hint_weight = (0.0, 0.0)
         self.size_hint_align = (EVAS_HINT_FILL, 0.0)
         self.select_mode = ELM_OBJECT_SELECT_MODE_DEFAULT
+        self.icon_size_set(16)
         self.callback_clicked_add(self.itemClicked)
 
         self.menu_parent = canvas
