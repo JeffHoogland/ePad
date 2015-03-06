@@ -35,7 +35,7 @@ AUTHORS = """
 
 <hilight>Robert Wiley (ylee)</hilight><br><br>
 
-<hilight>Kai Huuhko (kukko)</hilight><br><br>
+<hilight>Kai Huuhko (kuuko)</hilight><br><br>
 </align>
 """
 
@@ -72,11 +72,9 @@ INFO = """
 """
 
 
-import argparse
 import errno
 import sys
 import os
-import time
 import urllib
 try:
     # Python3
@@ -85,12 +83,10 @@ except ImportError:
     pass
 import re
 
-from efl import ecore
-from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
+from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL, \
+    EVAS_CALLBACK_KEY_UP, EVAS_EVENT_FLAG_ON_HOLD
 from efl import elementary
-from efl.elementary.window import StandardWindow, Window
-from efl.elementary.window import ELM_WIN_DIALOG_BASIC
-from efl.elementary.background import Background
+from efl.elementary.window import StandardWindow
 from efl.elementary.box import Box
 from efl.elementary.button import Button
 from efl.elementary.label import Label, ELM_WRAP_WORD
@@ -101,8 +97,6 @@ from efl.elementary.separator import Separator
 from efl.elementary.scroller import Scroller
 from efl.elementary.image import Image
 from efl.elementary.frame import Frame
-from efl.elementary.list import List
-from efl.elementary.frame import Frame
 from efl.elementary.entry import Entry, ELM_TEXT_FORMAT_PLAIN_UTF8, \
         markup_to_utf8, utf8_to_markup, ELM_WRAP_NONE, ELM_WRAP_MIXED
 from efl.elementary.popup import Popup
@@ -110,12 +104,8 @@ from efl.elementary.toolbar import Toolbar, ELM_OBJECT_SELECT_MODE_DEFAULT
 from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
         ELM_FLIP_ROTATE_YZ_CENTER_AXIS, ELM_FLIP_INTERACTION_ROTATE
 from efl.elementary.table import Table
-from efl.elementary.transit import Transit, \
-        ELM_TRANSIT_EFFECT_WIPE_TYPE_HIDE, ELM_TRANSIT_EFFECT_WIPE_DIR_RIGHT
 from efl.elementary.check import Check
-from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL
 from efl.elementary.naviframe import Naviframe
-from efl.ecore import Exe
 
 # Imported here to stop class resolver complaining when an input event
 # applies to an internal layout object
@@ -191,14 +181,6 @@ def errorPopup(window, errorMsg):
     errorPopup.part_content_set("button3", ok_btt)
     errorPopup.show()
 
-#A hack to work around elm keypress sucking a fat one
-def threeCount(ourCallback):
-    if not hasattr(threeCount, 'count'):
-        threeCount.count = 0
-    if threeCount.count == 0:
-        ourCallback()
-    #print(threeCount.count)
-    threeCount.count = (threeCount.count + 1) % 3
 
 def closeMenu(obj, label):
     if not hasattr(closeMenu, 'count'):
@@ -590,38 +572,38 @@ class Interface(object):
         #print(event_type)
         #print("")
 
-        try:
-            event.key
-        except:
+        if not event_type == EVAS_CALLBACK_KEY_UP:
             return False
 
         if event.modifier_is_set("Control"):
-            if event.key.lower() == "n":
+            if event.keyname == "n":
                 #newFile(self.newFile)
-                threeCount(self.newFile)
-            elif event.key.lower() == "s" and event.modifier_is_set("Shift"):
+                self.newFile()
+            elif event.keyname == "s" and event.modifier_is_set("Shift"):
                 self.saveAs()
-            elif event.key.lower() == "s":
+            elif event.keyname == "s":
                 self.saveFile()
-            elif event.key.lower() == "z" and event.modifier_is_set("Shift"):
-                threeCount(self.entryBox.reDo)
-            elif event.key.lower() == "z":
-                threeCount(self.entryBox.unDo)
-            elif event.key.lower() == "o":
+            elif event.keyname == "z" and event.modifier_is_set("Shift"):
+                self.entryBox.reDo()
+            elif event.keyname == "z":
+                self.entryBox.unDo()
+            elif event.keyname == "o":
                 self.openFile()
-            elif event.key.lower() == "h":
+            elif event.keyname == "h":
                 if not self.flip.front_visible_get():
                     #toggleHidden(self.fileSelector)
-                    threeCount(self.fileSelector.toggleHidden)
-            elif event.key.lower() == "q":
+                    self.fileSelector.toggleHidden()
+            elif event.keyname == "q":
                 #closeCtrlChecks(self)
-                threeCount(self.closeChecks)
-            elif event.key.lower() == "f":
+                self.closeChecks()
+            elif event.keyname == "f":
                 #toggleFind(self)
-                threeCount(self.showFind)
+                self.showFind()
+        elif isinstance(src, Entry) and event.key in ["space", "BackSpace", "Return"]:
+            self.entryBox.takeSnapShot()
 
-        if event.key.lower() in ["space", "backspace", "return"]:
-            threeCount(self.entryBox.takeSnapShot)
+        event.event_flags = event.event_flags | EVAS_EVENT_FLAG_ON_HOLD
+        return True
 
     def launch(self, start=[]):
         if start[0]:
@@ -732,6 +714,7 @@ class ePadEntry(Box):
         self.doArchive = []
         self.doSpot = 0
         self.takeSnapShot()
+        self.dirty = False
 
     def takeSnapShot(self, obj=None):
         if self.doSpot != len(self.doArchive)-1:
@@ -778,16 +761,19 @@ class ePadEntry(Box):
         if self.currentLinesShown < self.totalLines:
             lines = ""
             for i in range(self.currentLinesShown+1, self.totalLines+1):
-                lines = "%s%s<br>"%(lines, i)
-            self.lineList.entry_append("%s"%lines)
+                lines += "%s<br>"%(i)
+            self.lineList.entry_append(lines)
             self.currentLinesShown = self.totalLines
         elif self.currentLinesShown > self.totalLines:
-            lines = "<i>"
-
-            for i in range(1, self.totalLines+1):
-                lines = "%s%s<br>"%(lines, i)
-
-            self.lineList.entry_set(lines)
+            for i in range(self.totalLines+1, self.currentLinesShown+1):
+                ll = self.lineList
+                ll.cursor_end_set()
+                ll.cursor_prev()
+                ll.cursor_selection_begin()
+                ll.cursor_line_begin_set()
+                ll.cursor_prev()
+                ll.cursor_selection_end()
+                ll.selection_cut()
 
             self.currentLinesShown = self.totalLines
 
@@ -800,19 +786,34 @@ class ePadEntry(Box):
         self.totalLines = tmp_text.count("\n")+1
         if self.lineNums:
             self.checkLineNumbers()
-        line = tmp_text[:index].count("\n") + 1
-        col = len(tmp_text[:index].split("\n")[-1]) + 1
+        text_slice = tmp_text[:index]
+        split_line = text_slice.split("\n")
+        line_n = len(split_line)
+        col = len(split_line[-1]) + 1
         # Update label text with line, col
-        label.text = "Ln {0} Col {1} ".format(line, col)
+        label.text = "Ln {0} Col {1} ".format(line_n, col)
+
+    def setDirty(self, dirty):
+        if dirty:
+            self.dirty = True
+            self._parent.mainWindow.title = "*" + self._parent.mainWindow.title
+            self.button.text = "*" + self.button.text
+        else:
+            self.dirty = False
+            self._parent.mainWindow.title = self._parent.mainWindow.title[1:]
+            self.button.text = self.button.text[1:]
 
     def textEdited(self, obj=None):
-        current_file = self.mainEn.file[0]
-        current_file = \
-            os.path.basename(current_file) if \
-            current_file and not self.isNewFile else \
-            "Untitled"
-        self._parent.mainWindow.title = "*%s - ePad" % (current_file)
-        self.button.text = "*%s"%current_file
+        if not self.dirty:
+            self.setDirty(True)
+        # current_file = self.mainEn.file[0]
+        # if current_file and not self.isNewFile:
+        #     current_file = os.path.basename(current_file)
+        # else:
+        #     current_file = "Untitled"
+
+        # self._parent.mainWindow.title = "*%s - ePad" % (current_file)
+        # self.button.text = "*%s"%current_file
         self.isSaved = False
 
     def openFile(self, filePath):
