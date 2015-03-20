@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'http://jeffhoogland.github.io/ePad/'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -1332,6 +1332,6 @@ if __name__ == "__main__":
     else:
         GUI.launch([None, os.getcwd()])
     elementary.run()
-
+    GUI.fileSelector.shutdown()
     # Shutdown App
     elementary.shutdown()
