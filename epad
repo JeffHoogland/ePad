@@ -76,6 +76,8 @@ import errno
 import sys
 import os
 import urllib
+import io
+
 try:
     # Python3
     import urllib.request
@@ -429,7 +431,7 @@ class Interface(object):
             # Detect save errors as entry.file_save currently returns no errors
             #   even in the case where the file fails to save :(
             try:
-                newfile = open(file_selected, 'w')
+                newfile = io.open(file_selected, 'w')
             except IOError as err:
                 if err.errno == errno.EACCES:
                     errorMsg = ("Permision denied: <b>'%s'</b>."
@@ -941,7 +943,7 @@ class ePadEntry(Box):
         if file_selected:
             if IsSave == "save":
                 try:
-                    newfile = open(file_selected, 'w')
+                    newfile = io.open(file_selected, 'w')
                 except IOError as err:
                     print("ERROR: {0}: '{1}'".format(err.strerror,
                                                      file_selected))
