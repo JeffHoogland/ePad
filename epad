@@ -115,6 +115,7 @@ from efl.elementary.layout import Layout
 
 from elmextensions import AboutWindow
 from elmextensions import FileSelector
+from elmextensions import TabbedBox
 
 EXPAND_BOTH = EVAS_HINT_EXPAND, EVAS_HINT_EXPAND
 EXPAND_HORIZ = EVAS_HINT_EXPAND, 0.0
@@ -202,11 +203,8 @@ def resetCloseMenuCount(obj):
         if hasattr(closeMenu, 'count'):
             closeMenu.count = 0
 
-
 class Interface(object):
     def __init__(self):
-        self.isSaved = True
-        self.isNewFile = False
         self.confirmPopup = None
         self.lineNums = True
 
@@ -253,30 +251,14 @@ class Interface(object):
         self.findBox = ePadFindBox(self, self.mainWindow)
         self.findVisible = False
 
-        self.scr = Scroller(self.mainBox,
-                           size_hint_weight=EXPAND_HORIZ,
+        self.tabbs = TabbedBox(self.mainWindow, size_hint_weight=EXPAND_BOTH,
                            size_hint_align=FILL_BOTH)
-        self.scr.content_min_limit(False, True)
+        self.tabbs.closeCallback = self.closeFile
+        self.tabbs.emptyCallback = self.baseFile
+        self.tabbs.tabChangedCallback = self.tabChanged
+        self.tabbs.show()
 
-        self.buttonBox = Box(self.scr,
-                           size_hint_weight=EXPAND_HORIZ,
-                           size_hint_align=ALIGN_LEFT)
-        self.buttonBox.horizontal = True
-        self.buttonBox.show()
-
-        self.scr.content = self.buttonBox
-        self.scr.show()
-
-        self.mainBox.pack_end(self.scr)
-
-        self.nf = Naviframe(self.mainWindow,
-                               size_hint_weight=EXPAND_BOTH,
-                               size_hint_align=FILL_BOTH)
-        self.nf.show()
-
-        self.fileEntries = []
-
-        self.mainBox.pack_end(self.nf)
+        self.mainBox.pack_end(self.tabbs)
 
         # Build our file selector for saving/loading files
         self.fileBox = Box(self.mainWindow,
@@ -312,78 +294,30 @@ class Interface(object):
         self.mainWindow.resize_object_add(self.flip)
         self.flip.show()
 
-    def addFile(self, filePath):
-        entryBox = ePadEntry(self, self.nf, self.lineNums)
+    def tabChanged(self, tabbs, widget):
+        self.mainWindow.title = widget.data["button"].text
+
+    def addFile(self, filePath):        
+        entryBox = ePadEntry(self, self.tabbs, self.lineNums)
         entryBox.show()
-
-        self.fileEntries.append(entryBox)
-
-        self.nf.item_simple_push(entryBox)
 
         if filePath != "Untitled":
             entryBox.openFile(filePath)
-            btnText = filePath.split("/")[-1]
+            tabName = filePath.split("/")[-1]
         else:
-            btnText = "Untitled"
+            tabName = "Untitled"
+        
+        self.tabbs.addTab(entryBox, tabName)
 
-        btn = Button(self.buttonBox, style="anchor")
-        btn.text = btnText
-        btn.data["entry"] = entryBox
-        btn.callback_clicked_add(self.showFile)
-        btn.show()
+    def baseFile(self, tabbs):
+        #This function gets called when all files are closed
+        self.addFile("Untitled")
 
-        icn = Icon(self.mainWindow)
-        icn.standard_set("gtk-close")
-        icn.show()
-
-        cls = Button(self.buttonBox, content=icn, style="anchor")
-        cls.data["entry"] = entryBox
-        cls.callback_clicked_add(self.closeFile)
-        cls.show()
-
-        sep = Separator(self.buttonBox)
-        sep.show()
-
-        self.buttonBox.pack_end(btn)
-        self.buttonBox.pack_end(cls)
-        self.buttonBox.pack_end(sep)
-
-        #Arguments go: btn, cls, sep
-        entryBox.setWidgets(btn, cls, sep)
-
-        self.setFile(entryBox, btn.text)
-
-    def setFile(self, entryBox, winTitle):
-        self.nf.item_simple_push(entryBox)
-        self.mainWindow.title = "%s - ePad" % (winTitle)
-        self.entryBox = entryBox
-
-    def closeFile(self, btn, altBtn=False, forceClose=False):
-        if altBtn:
-            btn = altBtn
-
-        if btn.data["entry"].isSaved or forceClose:
-            self.buttonBox.unpack(btn.data["entry"].close)
-            self.buttonBox.unpack(btn.data["entry"].button)
-            self.buttonBox.unpack(btn.data["entry"].sep)
-
-            self.fileEntries.remove(btn.data["entry"])
-
-            if len(self.fileEntries):
-                if self.entryBox == btn.data["entry"]:
-                    self.setFile(self.fileEntries[0], self.fileEntries[0].button.text)
-            else:
-                self.addFile("Untitled")
-
-            btn.delete()
-            btn.data["entry"].button.delete()
-            btn.data["entry"].close.delete()
-            btn.data["entry"].sep.delete()
-        else:
-            btn.data["entry"].closeChecks(self.closeFile)
+    def closeFile(self, tabbs, widget):
+        widget.closeChecks()
 
     def showFile(self, btn):
-        if self.entryBox != btn.data["entry"]:
+        if self.tabbs.currentTab != btn.data["entry"]:
             self.setFile(btn.data["entry"], btn.text)
 
     def newFile(self, obj=None, ignoreSave=False):
@@ -401,8 +335,8 @@ class Interface(object):
 
     def showFind(self, obj=None):
         if not self.findVisible:
-            self.mainBox.pack_before(self.findBox, self.scr)
-            self.findBox.findEntry.text = self.entryBox.mainEn.selection_get()
+            self.mainBox.pack_before(self.findBox, self.tabbs)
+            self.findBox.findEntry.text = self.tabbs.currentTab.mainEn.selection_get()
             self.findBox.findEntry.focus_set(True)
             self.findBox.findEntry.cursor_end_set()
             self.findBox.show()
@@ -424,10 +358,10 @@ class Interface(object):
         self.flip.go(ELM_FLIP_ROTATE_XZ_CENTER_AXIS)
 
     def saveFile(self, obj=False):
-        if self.entryBox.mainEn.file_get()[0] is None or self.isNewFile:
+        if self.tabbs.currentTab.mainEn.file_get()[0] is None or self.tabbs.currentTab.isNewFile:
             self.saveAs()
         else:
-            file_selected = self.entryBox.mainEn.file_get()[0]
+            file_selected = self.tabbs.currentTab.mainEn.file_get()[0]
             # Detect save errors as entry.file_save currently returns no errors
             #   even in the case where the file fails to save :(
             try:
@@ -448,12 +382,12 @@ class Interface(object):
             # if entry is empty and the file does not exists then
             #   entry.file_save will destroy the file created about by the
             #   open statement above for some odd reason ...
-            if not self.entryBox.mainEn.is_empty:
-                self.entryBox.mainEn.file_save()
+            if not self.tabbs.currentTab.mainEn.is_empty:
+                self.tabbs.currentTab.mainEn.file_save()
             self.mainWindow.title_set("%s - ePad"
-                                      % os.path.basename(self.entryBox.mainEn.file[0]))
-            self.entryBox.button.text = os.path.basename(self.entryBox.mainEn.file[0])
-            self.entryBox.isSaved = True
+                                      % os.path.basename(self.tabbs.currentTab.mainEn.file[0]))
+            self.tabbs.currentTab.button.text = os.path.basename(self.tabbs.currentTab.mainEn.file[0])
+            self.tabbs.currentTab.isSaved = True
 
     def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
@@ -480,10 +414,10 @@ class Interface(object):
                     errorPopup(self.mainWindow, errorMsg)
                     return
                 elif os.path.exists(file_selected):
-                    self.entryBox.fileExists(file_selected)
+                    self.tabbs.currentTab.fileExists(file_selected)
                     return
                 else:
-                    self.entryBox.doSelected(file_selected)
+                    self.tabbs.currentTab.doSelected(file_selected)
                     return
             else:
                 self.addFile(file_selected)
@@ -500,7 +434,7 @@ class Interface(object):
     def closeChecks(self, obj=False):
         allSaved = True
 
-        for en in self.fileEntries:
+        for en in self.tabbs.tabs:
             if not en.isSaved:
                 allSaved = False
 
@@ -586,9 +520,9 @@ class Interface(object):
             elif event.keyname == "s":
                 self.saveFile()
             elif event.keyname == "z" and event.modifier_is_set("Shift"):
-                self.entryBox.reDo()
+                self.tabbs.currentTab.reDo()
             elif event.keyname == "z":
-                self.entryBox.unDo()
+                self.tabbs.currentTab.unDo()
             elif event.keyname == "o":
                 self.openFile()
             elif event.keyname == "h":
@@ -602,7 +536,7 @@ class Interface(object):
                 #toggleFind(self)
                 self.showFind()
         elif isinstance(src, Entry) and event.key in ["space", "BackSpace", "Return"]:
-            self.entryBox.takeSnapShot()
+            self.tabbs.currentTab.takeSnapShot()
 
         event.event_flags = event.event_flags | EVAS_EVENT_FLAG_ON_HOLD
         return True
@@ -637,7 +571,7 @@ class Interface(object):
             else:
                 print("Error: {0} is an Invalid Path".format(start[1]))
 
-        if not len(self.fileEntries):
+        if not len(self.tabbs.tabs):
             self.addFile("Untitled")
 
         self.mainWindow.show()
@@ -708,9 +642,6 @@ class ePadEntry(Box):
             self.line_label.show()
             self.pack_end(self.line_label)
 
-        self.button = None
-        self.close = None
-        self.sep = None
         self.isNewFile = True
         self.isSaved = True
         self.doArchive = []
@@ -799,11 +730,11 @@ class ePadEntry(Box):
         if dirty:
             self.dirty = True
             self._parent.mainWindow.title = "*" + self._parent.mainWindow.title
-            self.button.text = "*" + self.button.text
+            self.data["button"].text = "*" + self.data["button"].text
         else:
             self.dirty = False
             self._parent.mainWindow.title = self._parent.mainWindow.title[1:]
-            self.button.text = self.button.text[1:]
+            self.data["button"].text = self.data["button"].text[1:]
 
     def textEdited(self, obj=None):
         if not self.dirty:
@@ -829,16 +760,14 @@ class ePadEntry(Box):
         self.doSpot = 0
         self.takeSnapShot()
 
-    def setWidgets(self, btn, cls, sep):
-        self.button = btn
-        self.close = cls
-        self.sep = sep
-
     def closeChecks(self, ourCallback=None):
         print("File is Saved: ", self.isSaved)
-        self.confirmSave(ourCallback)
+        if not self.isSaved:
+            self.confirmSave()
+        else:
+            self._parent.tabbs.deleteTab(self)
 
-    def confirmSave(self, ourCallback=None):
+    def confirmSave(self):
         self.confirmPopup = Popup(self._parent.mainWindow,
                                   size_hint_weight=EXPAND_BOTH)
         self.confirmPopup.part_text_set("title,text", "File Unsaved")
@@ -850,8 +779,7 @@ class ePadEntry(Box):
         no_btt = Button(self._parent.mainWindow)
         no_btt.text = "No"
         no_btt.callback_clicked_add(self.closePopup, self.confirmPopup)
-        if ourCallback is not None:
-            no_btt.callback_clicked_add(ourCallback, self.button, True)
+        no_btt.callback_clicked_add(lambda o: self._parent.tabbs.deleteTab(self))
         no_btt.show()
         # cancel close request
         cancel_btt = Button(self._parent.mainWindow)
@@ -939,95 +867,42 @@ class ePadEntry(Box):
         else:
             file_selected = obj
 
-        IsSave = self._parent.fileSelector.mode
         if file_selected:
-            if IsSave == "save":
-                try:
-                    newfile = io.open(file_selected, 'w')
-                except IOError as err:
-                    print("ERROR: {0}: '{1}'".format(err.strerror,
-                                                     file_selected))
-                    if err.errno == errno.EACCES:
-                        errorMsg = ("Permision denied: <b>'%s'</b>."
+            try:
+                newfile = io.open(file_selected, 'w')
+            except IOError as err:
+                print("ERROR: {0}: '{1}'".format(err.strerror,
+                                                    file_selected))
+                if err.errno == errno.EACCES:
+                    errorMsg = ("Permision denied: <b>'%s'</b>."
                                     "<br><br>Operation failed !!!</br>"
                                     % (file_selected))
-                        errorPopup(self._parent.mainWindow, errorMsg)
-                    else:
-                        errorMsg = ("ERROR: %s: '%s'"
-                                    "<br><br>Operation failed !!!</br>"
-                                    % (err.strerror, file_selected))
-                        errorPopup(self._parent.mainWindow, errorMsg)
-                    return
-                tmp_text = self.mainEn.entry_get()
-                # FIXME: Why save twice?
-                newfile.write(tmp_text)
-                newfile.close()
-                # Suppress error message when empty file is saved
-                try:
-                    self.mainEn.file_set(file_selected,
-                                         ELM_TEXT_FORMAT_PLAIN_UTF8)
-                except RuntimeError:
-                    print("Empty file saved:{0}".format(file_selected))
-                self.mainEn.entry_set(tmp_text)
-                # if empty file entry.file_save destroys file :(
-                if len(tmp_text):
-                    self.mainEn.file_save()
-                self._parent.mainWindow.title_set("%s - ePad"
-                                          % os.path.basename(file_selected))
-                self.button.text = os.path.basename(file_selected)
-                self.isSaved = True
-                self.isNewFile = False
-            else:
-                if os.path.isdir(file_selected):
-                    print("ERROR: {0}: is a directory. "
-                          "Could not set file.".format(file_selected))
-                    current_file = os.path.basename(file_selected)
-                    errorMsg = ("<b>'%s'</b> is a folder."
-                                "<br><br>Operation failed !!!</br>"
-                                % (current_file))
                     errorPopup(self._parent.mainWindow, errorMsg)
-                    return
-                # Test to see if file can be opened to catch permission errors
-                #   as entry.file_set function does not differentiate
-                #   different possible errors.
-                try:
-                    with open(file_selected) as f:
-                        tmp_text = f.readline()
-                except IOError as err:
-
-                    if err.errno == errno.ENOENT:
-                        print("Creating New file '{0}'".format(file_selected))
-                        # self.fileSelector.current_name_set(file_selected)
-                        self.isSaved = False
-                    elif err.errno == errno.EACCES:
-                        print("ERROR: {0}: '{1}'".format(err.strerror,
-                              file_selected))
-                        errorMsg = ("Permision denied: <b>'%s'</b>."
-                                    "<br><br>Operation failed !!!</br>"
-                                    % (file_selected))
-                        errorPopup(self._parent.mainWindow, errorMsg)
-                        return
-                    else:
-                        print("ERROR: {0}: '{1}'".format(err.strerror,
-                              file_selected))
-                        errorMsg = ("ERROR: %s: '%s'"
+                else:
+                    errorMsg = ("ERROR: %s: '%s'"
                                     "<br><br>Operation failed !!!</br>"
                                     % (err.strerror, file_selected))
-                        errorPopup(self._parent.mainWindow, errorMsg)
-                        return
-                try:
-                    self.mainEn.file_set(file_selected,
+                    errorPopup(self._parent.mainWindow, errorMsg)
+                return
+            tmp_text = self.mainEn.entry_get()
+                # FIXME: Why save twice?
+            newfile.write(tmp_text)
+            newfile.close()
+                # Suppress error message when empty file is saved
+            try:
+                self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
-                except RuntimeError as msg:
-                    # Entry.file_set fails on empty files
-                    print("Empty file: {0}".format(file_selected))
-                self._parent.mainWindow.title_set("%s - ePad"
+            except RuntimeError:
+                print("Empty file saved:{0}".format(file_selected))
+            self.mainEn.entry_set(tmp_text)
+                # if empty file entry.file_save destroys file :(
+            if len(tmp_text):
+                self.mainEn.file_save()
+            self._parent.mainWindow.title_set("%s - ePad"
                                           % os.path.basename(file_selected))
-
-                self.button.text = os.path.basename(file_selected)
-
-                self.mainEn.focus_set(True)
-
+            self.data["button"].text = os.path.basename(file_selected)
+            self.isSaved = True
+            self.isNewFile = False
 
 class ePadFindBox(Box):
     def __init__(self, parent, canvas):
@@ -1103,7 +978,7 @@ class ePadFindBox(Box):
         self.pack_end(buttonBox)
 
     def replacePressed(self, obj):
-        tmp_text = markup_to_utf8(self._parent.entryBox.mainEn.entry_get())
+        tmp_text = markup_to_utf8(self._parent.tabbs.currentTab.mainEn.entry_get())
         if not self.caseCheck.state_get():
             search_string = self.findEntry.text.lower()
             locations = list(self.findAll(tmp_text.lower(), search_string))
@@ -1121,14 +996,14 @@ class ePadFindBox(Box):
                         ourRe = re.compile(search_string)
                     tmp_text = ourRe.sub(replace_string, tmp_text).encode('utf-8').strip()
                     tmp_text = utf8_to_markup(tmp_text)
-                    curPos = self._parent.entryBox.mainEn.cursor_pos_get()
-                    self._parent.entryBox.mainEn.text_set(tmp_text)
+                    curPos = self._parent.tabbs.currentTab.mainEn.cursor_pos_get()
+                    self._parent.tabbs.currentTab.mainEn.text_set(tmp_text)
                     try:
-                        self._parent.entryBox.mainEn.cursor_pos_set(curPos)
+                        self._parent.tabbs.currentTab.mainEn.cursor_pos_set(curPos)
                     except:
                         print("Error: Can't set cursor position")
-                    self._parent.entryBox.textEdited()
-                    self._parent.entryBox.takeSnapShot()
+                    self._parent.tabbs.currentTab.textEdited()
+                    self._parent.tabbs.currentTab.takeSnapShot()
                 else:
                     errorPopup(self._parent.mainWindow, "Text %s not found. Nothing replaced."%search_string)
             else:
@@ -1139,10 +1014,10 @@ class ePadFindBox(Box):
     def findPressed(self, obj):
         if not self.caseCheck.state_get():
             search_string = self.findEntry.text.lower()
-            tmp_text = markup_to_utf8(self._parent.entryBox.mainEn.entry_get()).lower()
+            tmp_text = markup_to_utf8(self._parent.tabbs.currentTab.mainEn.entry_get()).lower()
         else:
             search_string = self.findEntry.text
-            tmp_text = markup_to_utf8(self._parent.entryBox.mainEn.entry_get())
+            tmp_text = markup_to_utf8(self._parent.tabbs.currentTab.mainEn.entry_get())
         search_length = len(search_string)
         if search_length:
             locations = list(self.findAll(tmp_text, search_string))
@@ -1156,7 +1031,7 @@ class ePadFindBox(Box):
                         self.currentFind = locations[lastFind+1]
                     else:
                         self.currentFind = locations[0]
-                self._parent.entryBox.mainEn.select_region_set(self.currentFind, self.currentFind+search_length)
+                self._parent.tabbs.currentTab.mainEn.select_region_set(self.currentFind, self.currentFind+search_length)
             else:
                 errorPopup(self._parent.mainWindow, "Text %s not found."%search_string)
         else:
@@ -1252,26 +1127,26 @@ class ePadToolbar(Toolbar):
                         info=INFO)
 
     def optionsWWPress(self, obj, it):
-        wordwrap = self._parent.entryBox.mainEn.line_wrap
+        wordwrap = self._parent.tabbs.currentTab.mainEn.line_wrap
         if wordwrap == ELM_WRAP_MIXED:
             wordwrap = ELM_WRAP_NONE
             it.content.state = False
         else:
             wordwrap = ELM_WRAP_MIXED
             it.content.state = True
-        self._parent.entryBox.mainEn.line_wrap = wordwrap
+        self._parent.tabbs.currentTab.mainEn.line_wrap = wordwrap
         resetCloseMenuCount(None)
 
     def unDoPress(self, obj, it):
-        self._parent.entryBox.unDo()
+        self._parent.tabbs.currentTab.unDo()
         resetCloseMenuCount(None)
 
     def reDoPress(self, obj, it):
-        self._parent.entryBox.reDo()
+        self._parent.tabbs.currentTab.reDo()
         resetCloseMenuCount(None)
 
     def copyPress(self, obj, it):
-        self._parent.entryBox.mainEn.selection_copy()
+        self._parent.tabbs.currentTab.mainEn.selection_copy()
         resetCloseMenuCount(None)
 
     def itemClicked(self, obj):
@@ -1282,15 +1157,15 @@ class ePadToolbar(Toolbar):
             closeMenu(item, item.text_get())
 
     def pastePress(self, obj, it):
-        self._parent.entryBox.mainEn.selection_paste()
+        self._parent.tabbs.currentTab.mainEn.selection_paste()
         resetCloseMenuCount(None)
 
     def cutPress(self, obj, it):
-        self._parent.entryBox.mainEn.selection_cut()
+        self._parent.tabbs.currentTab.mainEn.selection_cut()
         resetCloseMenuCount(None)
 
     def selectAllPress(self, obj, it):
-        self._parent.entryBox.mainEn.select_all()
+        self._parent.tabbs.currentTab.mainEn.select_all()
         resetCloseMenuCount(None)
 
     def optionsNew(self, obj, it):
@@ -1302,9 +1177,9 @@ class ePadToolbar(Toolbar):
         resetCloseMenuCount(None)
 
     def optionsLineNums(self, obj, it):
-        self._parent.entryBox.lineNums = not self._parent.entryBox.lineNums
+        self._parent.tabbs.currentTab.lineNums = not self._parent.tabbs.currentTab.lineNums
         self._parent.lineNums = not self._parent.lineNums
-        if self._parent.entryBox.lineNums:
+        if self._parent.tabbs.currentTab.lineNums:
             it.content.state = True
             for en in self._parent.fileEntries:
                 en.entryBox.pack_before(en.lineList, en.mainEn)

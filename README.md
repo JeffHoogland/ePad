@@ -5,7 +5,7 @@ ePad - a simple text editor written in Elementary and Python
 Requires:
 - [python 2.7](https://www.python.org/)
 - [pyefl >= 1.12](http://git.enlightenment.org/bindings/python/python-efl.git/)
-- [elmextensions >= 0.1.4](https://github.com/JeffHoogland/python-elm-extensions)
+- [elmextensions >= 0.1.7](https://github.com/JeffHoogland/python-elm-extensions)
 
 1.0.0 TODO List:
 - Options Selector
