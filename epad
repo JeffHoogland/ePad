@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import #print_function  # May as well bite the bullet
+from __future__ import print_function  # May as well bite the bullet
 
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
@@ -133,8 +133,9 @@ NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
 
-def #printErr(*objs):
+def printErr(*objs):
     #print(*objs, file=sys.stderr)
+    pass
 
 def errorPopup(window, errorMsg):
     errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
@@ -386,7 +387,7 @@ class Interface(object):
                 self.tabbs.currentTab.mainEn.file_save()
             self.mainWindow.title_set("%s - ePad"
                                       % os.path.basename(self.tabbs.currentTab.mainEn.file[0]))
-            self.tabbs.currentTab.button.text = os.path.basename(self.tabbs.currentTab.mainEn.file[0])
+            self.tabbs.currentTab.data["button"].text = os.path.basename(self.tabbs.currentTab.mainEn.file[0])
             self.tabbs.currentTab.isSaved = True
 
     def fileSelected(self, fs, file_selected, onStartup=False):
@@ -569,6 +570,7 @@ class Interface(object):
                 #print("Initializing file selection path: {0}".format(start[1]))
                 self.lastDir = start[1]
             else:
+                pass
                 #print("Error: {0} is an Invalid Path".format(start[1]))
 
         if not len(self.tabbs.tabs):
@@ -753,6 +755,7 @@ class ePadEntry(Box):
         try:
             self.mainEn.file_set(filePath, ELM_TEXT_FORMAT_PLAIN_UTF8)
         except RuntimeError as msg:
+            pass
             #print("Empty file: {0}".format(filePath))
         self.isNewFile = False
         #Reset undo/redo tracks when we open a file
@@ -871,8 +874,9 @@ class ePadEntry(Box):
             try:
                 newfile = io.open(file_selected, 'w')
             except IOError as err:
+                pass
                 #print("ERROR: {0}: '{1}'".format(err.strerror,
-                                                    file_selected))
+                #                                    file_selected))
                 if err.errno == errno.EACCES:
                     errorMsg = ("Permision denied: <b>'%s'</b>."
                                     "<br><br>Operation failed !!!</br>"
@@ -893,6 +897,7 @@ class ePadEntry(Box):
                 self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
             except RuntimeError:
+                pass
                 #print("Empty file saved:{0}".format(file_selected))
             self.mainEn.entry_set(tmp_text)
                 # if empty file entry.file_save destroys file :(
@@ -1001,6 +1006,7 @@ class ePadFindBox(Box):
                     try:
                         self._parent.tabbs.currentTab.mainEn.cursor_pos_set(curPos)
                     except:
+                        pass
                         #print("Error: Can't set cursor position")
                     self._parent.tabbs.currentTab.textEdited()
                     self._parent.tabbs.currentTab.takeSnapShot()
