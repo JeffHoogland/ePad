@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function  # May as well bite the bullet
+from __future__ import #print_function  # May as well bite the bullet
 
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
@@ -133,8 +133,8 @@ NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
 
-def printErr(*objs):
-    print(*objs, file=sys.stderr)
+def #printErr(*objs):
+    #print(*objs, file=sys.stderr)
 
 def errorPopup(window, errorMsg):
     errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
@@ -235,7 +235,7 @@ class Interface(object):
 
         # Root User Notification
         if os.geteuid() == 0:
-            printErr("Caution: Root User")
+            #printErr("Caution: Root User")
             if NOTIFY_ROOT:
                 notifyBox = Box(self.mainWindow, horizontal=True)
                 notifyBox.show()
@@ -396,7 +396,7 @@ class Interface(object):
             #   is an elementary entry. So lets sanitize file_selected.
             file_selected = markup_to_utf8(file_selected)
         if file_selected:
-            print("File Selected: {0}".format(file_selected))
+            #print("File Selected: {0}".format(file_selected))
             self.lastDir = os.path.dirname(file_selected)
             # This fails if file_selected does not exist yet
 
@@ -502,11 +502,11 @@ class Interface(object):
         self.confirmPopup.show()
 
     def eventsCb(self, obj, src, event_type, event):
-        #print(obj)
-        #print(src)
-        #print(event.key.lower())
-        #print(event_type)
-        #print("")
+        ##print(obj)
+        ##print(src)
+        ##print(event.key.lower())
+        ##print(event_type)
+        ##print("")
 
         if not event_type == EVAS_CALLBACK_KEY_UP:
             return False
@@ -557,19 +557,19 @@ class Interface(object):
                         ourFile = urllib.request.url2pathname(ourFile[7:])
                 if os.path.isdir(os.path.dirname(ourFile)):
                     if os.path.isfile(ourFile):
-                        #print(ourFile)
+                        ##print(ourFile)
                         self.addFile(ourFile)
                 else:
-                    print("Error: {0} is an Invalid Path".format(ourFile))
+                    #print("Error: {0} is an Invalid Path".format(ourFile))
                     errorMsg = ("<b>'%s'</b> is an Invalid path."
                                 "<br><br>Open failed !!!" % (ourFile))
                     errorPopup(self.mainWindow, errorMsg)
         if start and start[1]:
             if os.path.isdir(start[1]):
-                print("Initializing file selection path: {0}".format(start[1]))
+                #print("Initializing file selection path: {0}".format(start[1]))
                 self.lastDir = start[1]
             else:
-                print("Error: {0} is an Invalid Path".format(start[1]))
+                #print("Error: {0} is an Invalid Path".format(start[1]))
 
         if not len(self.tabbs.tabs):
             self.addFile("Untitled")
@@ -670,7 +670,7 @@ class ePadEntry(Box):
 
         self.doSpot = len(self.doArchive) - 1
 
-        #print("Taking snapshot")
+        ##print("Taking snapshot")
 
     def unDo(self):
         if self.doSpot > 0:
@@ -678,14 +678,14 @@ class ePadEntry(Box):
             if self.doSpot == len(self.doArchive) - 1:
                 if self.doArchive[self.doSpot][1] != self.mainEn.entry_get():
                     self.takeSnapShot()
-            #print("undoing")
+            ##print("undoing")
             self.doSpot -= 1
             self.mainEn.entry_set(self.doArchive[self.doSpot][1])
             self.mainEn.cursor_pos_set(self.doArchive[self.doSpot][0])
 
     def reDo(self):
         if self.doSpot + 1 < len(self.doArchive):
-            #print("redoing")
+            ##print("redoing")
             self.doSpot += 1
             self.mainEn.entry_set(self.doArchive[self.doSpot][1])
             self.mainEn.cursor_pos_set(self.doArchive[self.doSpot][0])
@@ -753,7 +753,7 @@ class ePadEntry(Box):
         try:
             self.mainEn.file_set(filePath, ELM_TEXT_FORMAT_PLAIN_UTF8)
         except RuntimeError as msg:
-            print("Empty file: {0}".format(filePath))
+            #print("Empty file: {0}".format(filePath))
         self.isNewFile = False
         #Reset undo/redo tracks when we open a file
         self.doArchive = []
@@ -761,7 +761,7 @@ class ePadEntry(Box):
         self.takeSnapShot()
 
     def closeChecks(self, ourCallback=None):
-        print("File is Saved: ", self.isSaved)
+        #print("File is Saved: ", self.isSaved)
         if not self.isSaved:
             self.confirmSave()
         else:
@@ -871,7 +871,7 @@ class ePadEntry(Box):
             try:
                 newfile = io.open(file_selected, 'w')
             except IOError as err:
-                print("ERROR: {0}: '{1}'".format(err.strerror,
+                #print("ERROR: {0}: '{1}'".format(err.strerror,
                                                     file_selected))
                 if err.errno == errno.EACCES:
                     errorMsg = ("Permision denied: <b>'%s'</b>."
@@ -893,7 +893,7 @@ class ePadEntry(Box):
                 self.mainEn.file_set(file_selected,
                                          ELM_TEXT_FORMAT_PLAIN_UTF8)
             except RuntimeError:
-                print("Empty file saved:{0}".format(file_selected))
+                #print("Empty file saved:{0}".format(file_selected))
             self.mainEn.entry_set(tmp_text)
                 # if empty file entry.file_save destroys file :(
             if len(tmp_text):
@@ -1001,7 +1001,7 @@ class ePadFindBox(Box):
                     try:
                         self._parent.tabbs.currentTab.mainEn.cursor_pos_set(curPos)
                     except:
-                        print("Error: Can't set cursor position")
+                        #print("Error: Can't set cursor position")
                     self._parent.tabbs.currentTab.textEdited()
                     self._parent.tabbs.currentTab.takeSnapShot()
                 else:
@@ -1198,13 +1198,13 @@ if __name__ == "__main__":
     #Remove ePad.py from the arguments
     del ourFiles[0]
 
-    #print(ourFiles)
+    ##print(ourFiles)
 
     # Start App
     elementary.init()
     GUI = Interface()
     if ourFiles:
-        print("Opening files: '{0}'".format(ourFiles))
+        #print("Opening files: '{0}'".format(ourFiles))
         GUI.launch([ourFiles, None])
     else:
         GUI.launch([None, os.getcwd()])
