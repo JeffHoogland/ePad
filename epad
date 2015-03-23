@@ -385,9 +385,7 @@ class Interface(object):
             #   open statement above for some odd reason ...
             if not self.tabbs.currentTab.mainEn.is_empty:
                 self.tabbs.currentTab.mainEn.file_save()
-            self.mainWindow.title_set("%s - ePad"
-                                      % os.path.basename(self.tabbs.currentTab.mainEn.file[0]))
-            self.tabbs.currentTab.data["button"].text = os.path.basename(self.tabbs.currentTab.mainEn.file[0])
+            self.tabbs.currentTab.setDirty(False)
             self.tabbs.currentTab.isSaved = True
 
     def fileSelected(self, fs, file_selected, onStartup=False):
