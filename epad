@@ -1185,13 +1185,13 @@ class ePadToolbar(Toolbar):
         self._parent.lineNums = not self._parent.lineNums
         if self._parent.tabbs.currentTab.lineNums:
             it.content.state = True
-            for en in self._parent.fileEntries:
+            for en in self._parent.tabbs.tabs:
                 en.entryBox.pack_before(en.lineList, en.mainEn)
                 en.checkLineNumbers()
                 en.lineList.show()
         else:
             it.content.state = False
-            for en in self._parent.fileEntries:
+            for en in self._parent.tabbs.tabs:
                 en.entryBox.unpack(en.lineList)
                 en.lineList.hide()
 
