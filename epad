@@ -698,7 +698,13 @@ class ePadEntry(Box):
             self.lineList.entry_append(lines)
             self.currentLinesShown = self.totalLines
         elif self.currentLinesShown > self.totalLines:
-            for i in range(self.totalLines+1, self.currentLinesShown+1):
+            lines = "<i>"
+
+            for i in range(1, self.totalLines+1):
+                lines = "%s%s<br>"%(lines, i)
+
+            self.lineList.entry_set(lines)
+            '''for i in range(self.totalLines+1, self.currentLinesShown+1):
                 ll = self.lineList
                 ll.cursor_end_set()
                 ll.cursor_prev()
@@ -706,7 +712,7 @@ class ePadEntry(Box):
                 ll.cursor_line_begin_set()
                 ll.cursor_prev()
                 ll.cursor_selection_end()
-                ll.selection_cut()
+                ll.selection_cut()'''
 
             self.currentLinesShown = self.totalLines
 
