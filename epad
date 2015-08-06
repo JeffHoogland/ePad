@@ -20,8 +20,8 @@ from __future__ import print_function  # May as well bite the bullet
 
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
-__copyright__ = "Copyright (C) 2014 Bodhi Linux"
-__version__ = "0.9.2"
+__copyright__ = "Copyright (C) 2015 Bodhi Linux"
+__version__ = "0.9.3"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'http://jeffhoogland.github.io/ePad/'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -1159,7 +1159,7 @@ class ePadToolbar(Toolbar):
         self._parent.tabbs.currentTab.mainEn.selection_copy()
         resetCloseMenuCount(None)
 
-    def itemClicked(self, obj):
+    def itemClicked(self, obj, derf=None):
         item = obj.selected_item_get()
         if item.menu_get() is None and item.selected_get():
             item.selected_set(False)
