@@ -912,6 +912,7 @@ class ePadEntry(Box):
             self.data["button"].text = os.path.basename(file_selected)
             self.isSaved = True
             self.isNewFile = False
+            self.dirty = False
 
 class ePadFindBox(Box):
     def __init__(self, parent, canvas):
