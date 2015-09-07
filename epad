@@ -21,7 +21,7 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2015 Bodhi Linux"
-__version__ = "0.9.3"
+__version__ = "0.9.4"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'http://jeffhoogland.github.io/ePad/'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -297,6 +297,7 @@ class Interface(object):
 
     def tabChanged(self, tabbs, widget):
         self.mainWindow.title = widget.data["button"].text
+        self.mainTb.savebtn.disabled = not widget.dirty
 
     def addFile(self, filePath):        
         entryBox = ePadEntry(self, self.tabbs, self.lineNums)
@@ -647,7 +648,7 @@ class ePadEntry(Box):
         self.doArchive = []
         self.doSpot = 0
         self.takeSnapShot()
-        self.dirty = False
+        self.setDirty(False)
 
     def takeSnapShot(self, obj=None):
         if self.doSpot != len(self.doArchive)-1:
@@ -736,11 +737,19 @@ class ePadEntry(Box):
         if dirty:
             self.dirty = True
             self._parent.mainWindow.title = "*" + self._parent.mainWindow.title
-            self.data["button"].text = "*" + self.data["button"].text
+            try:
+                self.data["button"].text = "*" + self.data["button"].text
+            except:
+                pass
+            self._parent.mainTb.savebtn.disabled = False
         else:
             self.dirty = False
             self._parent.mainWindow.title = self._parent.mainWindow.title[1:]
-            self.data["button"].text = self.data["button"].text[1:]
+            try:
+                self.data["button"].text = self.data["button"].text[1:]
+            except:
+                pass
+            self._parent.mainTb.savebtn.disabled = True
 
     def textEdited(self, obj=None):
         if not self.dirty:
@@ -907,12 +916,13 @@ class ePadEntry(Box):
                 # if empty file entry.file_save destroys file :(
             if len(tmp_text):
                 self.mainEn.file_save()
-            self._parent.mainWindow.title_set("%s - ePad"
-                                          % os.path.basename(file_selected))
-            self.data["button"].text = os.path.basename(file_selected)
+            #self._parent.mainWindow.title_set("%s - ePad"
+            #                              % os.path.basename(file_selected))
+            #self.data["button"].text = os.path.basename(file_selected)
             self.isSaved = True
             self.isNewFile = False
-            self.dirty = False
+            #self.dirty = False
+            self.setDirty(False)
 
 class ePadFindBox(Box):
     def __init__(self, parent, canvas):
@@ -998,27 +1008,27 @@ class ePadFindBox(Box):
         search_length = len(search_string)
         if search_length:
             replace_string = self.replaceEntry.text
-            if replace_string:
-                if len(locations):
-                    if not self.caseCheck.state_get():
-                        ourRe = re.compile(search_string, re.IGNORECASE)
-                    else:
-                        ourRe = re.compile(search_string)
-                    tmp_text = ourRe.sub(replace_string, tmp_text).encode('utf-8').strip()
-                    tmp_text = utf8_to_markup(tmp_text)
-                    curPos = self._parent.tabbs.currentTab.mainEn.cursor_pos_get()
-                    self._parent.tabbs.currentTab.mainEn.text_set(tmp_text)
-                    try:
-                        self._parent.tabbs.currentTab.mainEn.cursor_pos_set(curPos)
-                    except:
-                        pass
-                        #print("Error: Can't set cursor position")
-                    self._parent.tabbs.currentTab.textEdited()
-                    self._parent.tabbs.currentTab.takeSnapShot()
+            #if replace_string:
+            if len(locations):
+                if not self.caseCheck.state_get():
+                    ourRe = re.compile(search_string, re.IGNORECASE)
                 else:
-                    errorPopup(self._parent.mainWindow, "Text %s not found. Nothing replaced."%search_string)
+                    ourRe = re.compile(search_string)
+                tmp_text = ourRe.sub(replace_string, tmp_text).encode('utf-8').strip()
+                tmp_text = utf8_to_markup(tmp_text)
+                curPos = self._parent.tabbs.currentTab.mainEn.cursor_pos_get()
+                self._parent.tabbs.currentTab.mainEn.text_set(tmp_text)
+                try:
+                    self._parent.tabbs.currentTab.mainEn.cursor_pos_set(curPos)
+                except:
+                    pass
+                    #print("Error: Can't set cursor position")
+                self._parent.tabbs.currentTab.textEdited()
+                self._parent.tabbs.currentTab.takeSnapShot()
             else:
-                errorPopup(self._parent.mainWindow, "No replacement string entered.")
+                errorPopup(self._parent.mainWindow, "Text %s not found. Nothing replaced."%search_string)
+            #else:
+            #    errorPopup(self._parent.mainWindow, "No replacement string entered.")
         else:
             errorPopup(self._parent.mainWindow, "No find string entered.")
 
@@ -1076,8 +1086,9 @@ class ePadToolbar(Toolbar):
                          lambda self, obj: self._parent.newFile())
         self.item_append("document-open", "Open",
                          lambda self, obj: self._parent.openFile())
-        self.item_append("document-save", "Save",
+        self.savebtn = self.item_append("document-save", "Save",
                          lambda self, obj: self._parent.saveFile())
+        self.savebtn.disabled = True
         self.item_append("document-save-as", "Save As",
                          lambda self, obj: self._parent.saveAs())
         # -- Edit Dropdown Menu --
