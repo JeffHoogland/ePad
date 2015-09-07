@@ -916,12 +916,11 @@ class ePadEntry(Box):
                 # if empty file entry.file_save destroys file :(
             if len(tmp_text):
                 self.mainEn.file_save()
-            #self._parent.mainWindow.title_set("%s - ePad"
-            #                              % os.path.basename(file_selected))
-            #self.data["button"].text = os.path.basename(file_selected)
+            self._parent.mainWindow.title_set(" %s - ePad" % os.path.basename(file_selected))
+            self.data["button"].text = " %s" % os.path.basename(file_selected)
+            #self.dirty = False
             self.isSaved = True
             self.isNewFile = False
-            #self.dirty = False
             self.setDirty(False)
 
 class ePadFindBox(Box):
