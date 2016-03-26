@@ -363,31 +363,32 @@ class Interface(object):
         if self.tabbs.currentTab.mainEn.file_get()[0] is None or self.tabbs.currentTab.isNewFile:
             self.saveAs()
         else:
-            file_selected = self.tabbs.currentTab.mainEn.file_get()[0]
-            # Detect save errors as entry.file_save currently returns no errors
-            #   even in the case where the file fails to save :(
-            try:
-                newfile = io.open(file_selected, 'w')
-            except IOError as err:
-                if err.errno == errno.EACCES:
-                    errorMsg = ("Permision denied: <b>'%s'</b>."
-                                "<br><br>Operation failed !!!"
-                                % (file_selected))
-                    errorPopup(self.mainWindow, errorMsg)
-                else:
-                    errorMsg = ("ERROR: %s: '%s'"
-                                "<br><br>Operation failed !!!"
-                                % (err.strerror, file_selected))
-                    errorPopup(self.mainWindow, errorMsg)
-                return
-            newfile.close()
-            # if entry is empty and the file does not exists then
-            #   entry.file_save will destroy the file created about by the
-            #   open statement above for some odd reason ...
-            if not self.tabbs.currentTab.mainEn.is_empty:
-                self.tabbs.currentTab.mainEn.file_save()
-            self.tabbs.currentTab.setDirty(False)
-            self.tabbs.currentTab.isSaved = True
+            if not self.tabbs.currentTab.isSaved:
+                file_selected = self.tabbs.currentTab.mainEn.file_get()[0]
+                # Detect save errors as entry.file_save currently returns no errors
+                #   even in the case where the file fails to save :(
+                try:
+                    newfile = io.open(file_selected, 'w')
+                except IOError as err:
+                    if err.errno == errno.EACCES:
+                        errorMsg = ("Permision denied: <b>'%s'</b>."
+                                    "<br><br>Operation failed !!!"
+                                    % (file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    else:
+                        errorMsg = ("ERROR: %s: '%s'"
+                                    "<br><br>Operation failed !!!"
+                                    % (err.strerror, file_selected))
+                        errorPopup(self.mainWindow, errorMsg)
+                    return
+                newfile.close()
+                # if entry is empty and the file does not exists then
+                #   entry.file_save will destroy the file created about by the
+                #   open statement above for some odd reason ...
+                if not self.tabbs.currentTab.mainEn.is_empty:
+                    self.tabbs.currentTab.mainEn.file_save()
+                self.tabbs.currentTab.setDirty(False)
+                self.tabbs.currentTab.isSaved = True
 
     def fileSelected(self, fs, file_selected, onStartup=False):
         if not onStartup:
