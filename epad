@@ -1105,7 +1105,7 @@ class ePadToolbar(Toolbar):
         menu.item_add(None, "Select All", "edit-select-all",
                       self.selectAllPress)
 
-        self.item_append("gtk-find", "Find",
+        self.item_append("edit-find-replace", "Find",
                          lambda self, obj: self._parent.showFind())
         # -----------------------
         #
