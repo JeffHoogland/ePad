@@ -1078,7 +1078,7 @@ class ePadToolbar(Toolbar):
         self.size_hint_align = (EVAS_HINT_FILL, 0.0)
         self.select_mode = ELM_OBJECT_SELECT_MODE_DEFAULT
         self.icon_size_set(16)
-        self.callback_clicked_add(self.itemClicked)
+        self.callback_selected_add(self.itemClicked)
 
         self.menu_parent = canvas
 
@@ -1171,11 +1171,12 @@ class ePadToolbar(Toolbar):
         self._parent.tabbs.currentTab.mainEn.selection_copy()
         resetCloseMenuCount(None)
 
-    def itemClicked(self, obj, derf=None):
-        item = obj.selected_item_get()
+    def itemClicked(self, obj, item):
         if item.menu_get() is None and item.selected_get():
+            #print("one")
             item.selected_set(False)
         elif item.menu_get():
+            #print("two")
             closeMenu(item, item.text_get())
 
     def pastePress(self, obj, it):
