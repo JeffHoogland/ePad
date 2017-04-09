@@ -1228,7 +1228,7 @@ class ePadConf(object):
             # only support for linux is implemented
             raise RuntimeError("Unsupported OS: patches accepted.")
 
-        self.__file_name = "{0}.rc".format(__appname__)
+        self.__file_name = "{0}.json".format(__appname__)
         # we follow the XDG spec and support $XDG_CONFIG_HOME.
         #   Also, traditionally, Linux apps store their data in
         #    "~/.config/<appname>" instead of "~/.local/share/<appname>".
