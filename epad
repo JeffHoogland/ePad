@@ -131,7 +131,6 @@ ALIGN_LEFT = 0.0, 0.5
 PADDING = 15, 0
 # User options
 WORD_WRAP = ELM_WRAP_NONE
-SHOW_POS = True
 NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
@@ -212,7 +211,7 @@ def resetCloseMenuCount(obj):
 class Interface(object):
     def __init__(self):
         self.confirmPopup = None
-        self.lineNums = True
+        self.config = ePadConf()
 
         self.mainWindow = StandardWindow("epad", "Untitled - ePad",
                                          size=(600, 400))
@@ -305,7 +304,7 @@ class Interface(object):
         self.mainTb.savebtn.disabled = not widget.dirty
 
     def addFile(self, filePath):
-        entryBox = ePadEntry(self, self.tabbs, self.lineNums)
+        entryBox = ePadEntry(self, self.tabbs)
         entryBox.show()
 
         if filePath != "Untitled":
@@ -573,7 +572,7 @@ class Interface(object):
         self.mainWindow.show()
 
 class ePadEntry(Box):
-    def __init__(self, parent, canvas, lineNums):
+    def __init__(self, parent, canvas):
         Box.__init__(self, canvas)
         self._parent = parent
         self._canvas = canvas
@@ -597,7 +596,7 @@ class ePadEntry(Box):
         self.currentLinesShown = 1
         self.lineList.text_set("<i>1<br>")
 
-        self.lineNums = lineNums
+        self.lineNums = self._parent.config['line_numbers']
 
         self.mainEn = Entry(self._canvas, scrollable=False,
                             line_wrap=self._parent.wordwrap, autosave=False,
@@ -613,7 +612,7 @@ class ePadEntry(Box):
         self.mainEn.show()
         self.mainEn.focus_set(True)
 
-        if lineNums:
+        if self.lineNums:
             self.lineList.show()
             self.entryBox.pack_end(self.lineList)
         self.entryBox.pack_end(self.mainEn)
@@ -627,7 +626,7 @@ class ePadEntry(Box):
         self.pack_end(self.scr)
 
         # Add label to show current cursor position
-        if SHOW_POS:
+        if self._parent.config['show_pos']:
             self.line_label = Label(self._canvas,
                                     size_hint_weight=EXPAND_HORIZ,
                                     size_hint_align=ALIGN_RIGHT)
@@ -966,8 +965,9 @@ class ePadFindBox(Box):
         closeButton.callback_pressed_add(self._parent.showFind)
         closeButton.show()
 
-        self.caseCheck = Check(self._canvas)
-        self.caseCheck.text = "Case Sensitive"
+        self.caseCheck = Check(self._canvas, text = "Case Sensitive")
+        self.caseCheck.state_set(self._parent.config['case_sensitive'])
+        self.caseCheck.callback_changed_add(self.caseUpdate)
         self.caseCheck.show()
 
         buttonBox.pack_end(self.caseCheck)
@@ -991,7 +991,7 @@ class ePadFindBox(Box):
             replace_string = self.replaceEntry.text
             #if replace_string:
             if len(locations):
-                if not self.caseCheck.state_get():
+                if not self._parent.config['case_sensitive']:
                     ourRe = re.compile(search_string, re.IGNORECASE)
                 else:
                     ourRe = re.compile(search_string)
@@ -1046,6 +1046,9 @@ class ePadFindBox(Box):
             if start == -1: return
             yield start
             start += len(sub) + 1
+
+    def caseUpdate(self, ck):
+        self._parent.config['case_sensitive'] = ck.state_get()
 
 
 class ePadToolbar(Toolbar):
@@ -1108,7 +1111,7 @@ class ePadToolbar(Toolbar):
         it = menu.item_add(None, "Line Numbers", None, self.optionsLineNums)
         chk = Check(canvas, disabled=True)
         it.content = chk
-        it.content.state = True
+        it.content.state = self._parent.config['line_numbers']
 
         '''it = menu.item_add(None, "New Instance", None, self.optionsNew)
         chk = Check(canvas, disabled=True)
@@ -1180,7 +1183,7 @@ class ePadToolbar(Toolbar):
 
     def optionsLineNums(self, obj, it):
         self._parent.tabbs.currentTab.lineNums = not self._parent.tabbs.currentTab.lineNums
-        self._parent.lineNums = not self._parent.lineNums
+        self._parent.config['line_numbers'] = not self._parent.config['line_numbers']
         if self._parent.tabbs.currentTab.lineNums:
             it.content.state = True
             for en in self._parent.tabbs.tabs:
