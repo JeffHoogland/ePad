@@ -299,7 +299,7 @@ class Interface(object):
         self.mainWindow.title = widget.data["button"].text
         self.mainTb.savebtn.disabled = not widget.dirty
 
-    def addFile(self, filePath):        
+    def addFile(self, filePath):
         entryBox = ePadEntry(self, self.tabbs, self.lineNums)
         entryBox.show()
 
@@ -308,7 +308,7 @@ class Interface(object):
             tabName = filePath.split("/")[-1]
         else:
             tabName = "Untitled"
-        
+
         self.tabbs.addTab(entryBox, tabName)
 
     def baseFile(self, tabbs):
@@ -503,11 +503,6 @@ class Interface(object):
         self.confirmPopup.show()
 
     def eventsCb(self, obj, src, event_type, event):
-        ##print(obj)
-        ##print(src)
-        ##print(event.key.lower())
-        ##print(event_type)
-        ##print("")
 
         if not event_type == EVAS_CALLBACK_KEY_UP:
             return False
@@ -528,13 +523,10 @@ class Interface(object):
                 self.openFile()
             elif event.keyname == "h":
                 if not self.flip.front_visible_get():
-                    #toggleHidden(self.fileSelector)
                     self.fileSelector.toggleHidden()
             elif event.keyname == "q":
-                #closeCtrlChecks(self)
                 self.closeChecks()
             elif event.keyname == "f":
-                #toggleFind(self)
                 self.showFind()
         elif isinstance(src, Entry) and event.key in ["space", "BackSpace", "Return"]:
             self.tabbs.currentTab.takeSnapShot()
@@ -561,17 +553,14 @@ class Interface(object):
                         ##print(ourFile)
                         self.addFile(ourFile)
                 else:
-                    #print("Error: {0} is an Invalid Path".format(ourFile))
                     errorMsg = ("<b>'%s'</b> is an Invalid path."
                                 "<br><br>Open failed !!!" % (ourFile))
                     errorPopup(self.mainWindow, errorMsg)
         if start and start[1]:
             if os.path.isdir(start[1]):
-                #print("Initializing file selection path: {0}".format(start[1]))
                 self.lastDir = start[1]
             else:
                 pass
-                #print("Error: {0} is an Invalid Path".format(start[1]))
 
         if not len(self.tabbs.tabs):
             self.addFile("Untitled")
@@ -672,7 +661,6 @@ class ePadEntry(Box):
 
         self.doSpot = len(self.doArchive) - 1
 
-        ##print("Taking snapshot")
 
     def unDo(self):
         if self.doSpot > 0:
@@ -680,14 +668,12 @@ class ePadEntry(Box):
             if self.doSpot == len(self.doArchive) - 1:
                 if self.doArchive[self.doSpot][1] != self.mainEn.entry_get():
                     self.takeSnapShot()
-            ##print("undoing")
             self.doSpot -= 1
             self.mainEn.entry_set(self.doArchive[self.doSpot][1])
             self.mainEn.cursor_pos_set(self.doArchive[self.doSpot][0])
 
     def reDo(self):
         if self.doSpot + 1 < len(self.doArchive):
-            ##print("redoing")
             self.doSpot += 1
             self.mainEn.entry_set(self.doArchive[self.doSpot][1])
             self.mainEn.cursor_pos_set(self.doArchive[self.doSpot][0])
@@ -755,14 +741,6 @@ class ePadEntry(Box):
     def textEdited(self, obj=None):
         if not self.dirty:
             self.setDirty(True)
-        # current_file = self.mainEn.file[0]
-        # if current_file and not self.isNewFile:
-        #     current_file = os.path.basename(current_file)
-        # else:
-        #     current_file = "Untitled"
-
-        # self._parent.mainWindow.title = "*%s - ePad" % (current_file)
-        # self.button.text = "*%s"%current_file
         self.isSaved = False
 
     def openFile(self, filePath):
@@ -770,7 +748,6 @@ class ePadEntry(Box):
             self.mainEn.file_set(filePath, ELM_TEXT_FORMAT_PLAIN_UTF8)
         except RuntimeError as msg:
             pass
-            #print("Empty file: {0}".format(filePath))
         self.isNewFile = False
         #Reset undo/redo tracks when we open a file
         self.doArchive = []
@@ -778,7 +755,6 @@ class ePadEntry(Box):
         self.takeSnapShot()
 
     def closeChecks(self, ourCallback=None):
-        #print("File is Saved: ", self.isSaved)
         if not self.isSaved:
             self.confirmSave()
         else:
@@ -919,7 +895,7 @@ class ePadEntry(Box):
                 self.mainEn.file_save()
             self._parent.mainWindow.title_set(" %s - ePad" % os.path.basename(file_selected))
             self.data["button"].text = " %s" % os.path.basename(file_selected)
-            #self.dirty = False
+
             self.isSaved = True
             self.isNewFile = False
             self.setDirty(False)
@@ -1173,10 +1149,8 @@ class ePadToolbar(Toolbar):
 
     def itemClicked(self, obj, item):
         if item.menu_get() is None and item.selected_get():
-            #print("one")
             item.selected_set(False)
         elif item.menu_get():
-            #print("two")
             closeMenu(item, item.text_get())
 
     def pastePress(self, obj, it):
@@ -1221,13 +1195,10 @@ if __name__ == "__main__":
     #Remove ePad.py from the arguments
     del ourFiles[0]
 
-    ##print(ourFiles)
-
     # Start App
     elementary.init()
     GUI = Interface()
     if ourFiles:
-        #print("Opening files: '{0}'".format(ourFiles))
         GUI.launch([ourFiles, None])
     else:
         GUI.launch([None, os.getcwd()])
