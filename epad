@@ -21,7 +21,8 @@ from __future__ import print_function  # May as well bite the bullet
 __author__ = "Jeff Hoogland"
 __contributors__ = ["Jeff Hoogland", "Robert Wiley", "Kai Huuhko", "Scimmia22"]
 __copyright__ = "Copyright (C) 2015 Bodhi Linux"
-__version__ = "0.9.4"
+__appname__ = 'epad'
+__version__ = "0.9.5"
 __description__ = 'A simple text editor for the Enlightenment Desktop.'
 __github__ = 'http://jeffhoogland.github.io/ePad/'
 __source__ = 'Source code and bug reports: {0}'.format(__github__)
@@ -77,6 +78,8 @@ import sys
 import os
 import urllib
 import io
+import json
+from collections import Mapping
 
 try:
     # Python3
@@ -1189,6 +1192,143 @@ class ePadToolbar(Toolbar):
             for en in self._parent.tabbs.tabs:
                 en.entryBox.unpack(en.lineList)
                 en.lineList.hide()
+
+
+class ePadConf(object):
+    """
+    config file object
+    """
+
+    # Config version follows major:minor format
+    #  an increase in major version number indicates incompatible
+    #     config file format change
+    #  an increase in minor for compatible config file format change
+    __config_version_major = 0
+    __config_version_minor = 1
+    __config_version = '{0}.{1}'.format(__config_version_major,
+                                        __config_version_minor)
+    default = {"version": __config_version,
+               "word_wrap": False,
+               "font": "Sans",
+               "font_size": 10,
+               "font_style": "Normal",
+               "line_numbers": True,
+               "show_hidden": False,
+               "show_pos": True,
+               "max_undo": 100,
+               "case_sensitive": False}
+
+    def __init__(self):
+        # sys.platform returns 'linux2' in py2 and linux in py3
+        #   hence hackish way to ensure compatibility
+        if sys.platform[:5] != 'linux':
+            # only support for linux is implemented
+            raise RuntimeError("Unsupported OS: patches accepted.")
+
+        self.__file_name = "{0}.rc".format(__appname__)
+        # we follow the XDG spec and support $XDG_CONFIG_HOME.
+        #   Also, traditionally, Linux apps store their data in
+        #    "~/.config/<appname>" instead of "~/.local/share/<appname>".
+        self.__dir_path = os.getenv('XDG_CONFIG_HOME',
+                                    os.path.expanduser('~/.config'))
+        self.__dir_path = os.path.join(self.__dir_path,
+                                       '{0}'.format(__appname__))
+        # Better way to do the below in py3 but ...
+        try:
+            os.makedirs(self.__dir_path)
+        except OSError:
+            if not os.path.isdir(self.__dir_path):
+                raise
+        self.path = os.path.join(self.__dir_path, self.__file_name)
+        # Initialize config data
+        self.get_config()
+
+    def get_config(self):
+        """
+        Initializes the config data
+        """
+        if os.path.exists(self.path):
+            try:
+                with open(self.path) as config_file:
+                    self.data = json.load(config_file)
+            except ValueError:
+                print_err('Config file corruption!')
+                self.default_config()
+        else:
+            self.default_config()
+
+        if not self.__validate():
+            print_err('Config file corruption!')
+            self.default_config()
+
+        version = self.data["version"]
+        if version.split('.')[0] != str(self.__config_version_major):
+            print_err('Config version mismatch')
+            self.default_config()
+
+    def __validate(self):
+        """
+        Return true on Valid config keys. No checks on config values
+        """
+        return set(ePadConf.default) == set(self.data)
+
+    def write(self):
+        with open(self.path, "w") as config_file:
+            json.dump(self.data, config_file, sort_keys=True, indent=4, separators=(',', ': '))
+
+    def default_config(self):
+        """
+        Create a config file
+        """
+        self.data = ePadConf.default
+        self.write()
+
+    def __getitem__(self, setting):
+        """
+        Returns a setting.
+        """
+        try:
+            value = self.data[setting]
+        except KeyError:
+            print_err('Invalid settings: "{0}"'.format(setting))
+            value = None
+        return value
+
+    def __setitem__(self, setting, value):
+        """
+        Update a setting. No validation on Value. Save file after update.
+        """
+        self.__safe_set(setting, value)
+        self.write()
+
+    def __safe_set(self, setting, value):
+        """
+        Update a setting. No validation on Value.
+        """
+        try:
+            if self.data[setting] == value:
+                return
+        except KeyError:
+            print_err('Invalid settings: "{0}"'.format(setting))
+            return
+        self.data[setting] = value
+
+    def update(self, settings=None, **kwargs):
+        """
+        Update Multiple settings. No validation on Value.
+            Saves file after update.
+        Usage:
+                config = ePadConf()
+                config.update(font='Mono',font_size=24)
+                config.update({'font': 'Mono', 'font_size': 24})
+        """
+        if settings is not None:
+            for setting, value in settings.items() if isinstance(settings, Mapping) else settings:
+                self.__safe_set(setting, value)
+        for setting, value in kwargs.items():
+            self.__safe_set(setting, value)
+        self.write()
+
 
 if __name__ == "__main__":
 
