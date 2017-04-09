@@ -9,7 +9,8 @@ Requires:
 
 1.0.0 TODO List:
 - Options Selector
-- Rc config file
+- ~~Rc config file~~
+- Font Selection Dialog
 
 Credits:
 - [Jeff Hoogland](http://www.jeffhoogland.com/)
