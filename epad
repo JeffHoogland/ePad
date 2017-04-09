@@ -133,9 +133,11 @@ NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
 
-def printErr(*objs):
-    #print(*objs, file=sys.stderr)
-    pass
+def print_err(*args, **kwargs):
+    """
+    error message to stderr
+    """
+    print('[ePad]:', *args, file=sys.stderr, **kwargs)
 
 def errorPopup(window, errorMsg):
     errorPopup = Popup(window, size_hint_weight=EXPAND_BOTH)
