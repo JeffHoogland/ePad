@@ -572,13 +572,25 @@ class Interface(object):
         self.mainWindow.show()
 
 class ePadEntry(Box):
+
+    default_font_size = 14
+
     def __init__(self, parent, canvas):
         Box.__init__(self, canvas)
         self._parent = parent
         self._canvas = canvas
+        self._config = self._parent.config
 
         self.size_hint_weight = EXPAND_BOTH
         self.size_hint_align = FILL_BOTH
+
+        font = self._config['font']
+        font_style = self._config['font_style']
+        font_weight = self._config['font_weight']
+        font_width = self._config['font_width']
+        font_size = self._config['font_size']
+
+        self.font_style = "DEFAULT='font={0} font_style={1} font_weight={2} font_width={3} font_size={4}'".format(font, font_style, font_weight, font_width, str(font_size))
 
         self.entryBox = Box(self._canvas,
                            size_hint_weight=EXPAND_BOTH,
@@ -592,7 +604,7 @@ class ePadEntry(Box):
                            size_hint_weight=(0.0, EVAS_HINT_EXPAND),
                            size_hint_align=(0.0, 0.0),
                            line_wrap=ELM_WRAP_NONE)
-        self.lineList.text_style_user_push("DEFAULT='font_size=14'")
+        self.lineList.text_style_user_push("DEFAULT='font_size={0}'".format(self._config['font_size']))
         self.currentLinesShown = 1
         self.lineList.text_set("<i>1<br>")
 
@@ -606,7 +618,8 @@ class ePadEntry(Box):
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
         self.mainEn.callback_selection_cut_add(self.takeSnapShot)
         self.mainEn.callback_selection_paste_add(self.takeSnapShot)
-        self.mainEn.text_style_user_push("DEFAULT='font_size=14'")
+        # FIXME: Font in font style doesn't seem changed all other settings seem to work
+        self.mainEn.text_style_user_push(self.font_style)
 
         self.totalLines = 0
         self.mainEn.show()
@@ -668,7 +681,7 @@ class ePadEntry(Box):
 
     def unDo(self):
         if self.doSpot > 0:
-            #A check if this is the first time we are undoing that we store the latest data
+            # A check if this is the first time we are undoing that we store the latest data
             if self.doSpot == len(self.doArchive) - 1:
                 if self.doArchive[self.doSpot][1] != self.mainEn.entry_get():
                     self.takeSnapShot()
@@ -1213,8 +1226,10 @@ class ePadConf(object):
     default = {"version": __config_version,
                "word_wrap": False,
                "font": "Sans",
-               "font_size": 10,
+               "font_size": ePadEntry.default_font_size,
                "font_style": "Normal",
+               "font_weight": "Normal",
+               "font_width": "Normal",
                "line_numbers": True,
                "show_hidden": False,
                "show_pos": True,
