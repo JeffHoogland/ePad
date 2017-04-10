@@ -130,7 +130,6 @@ ALIGN_RIGHT = 1.0, 0.5
 ALIGN_LEFT = 0.0, 0.5
 PADDING = 15, 0
 # User options
-WORD_WRAP = ELM_WRAP_NONE
 NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
@@ -584,9 +583,9 @@ class ePadEntry(Box):
         self.size_hint_weight = EXPAND_BOTH
         self.size_hint_align = FILL_BOTH
         # py-efl doesn't work correctly with fonts that have spaces in names
-        #   Oddly enough remove spaces and works 
+        #   Oddly enough remove spaces and works
         #   versions up to 1.18 (inclusive)
-        font = self._config['font'].replace(' ', '') 
+        font = self._config['font'].replace(' ', '')
         font_style = self._config['font_style']
         font_weight = self._config['font_weight']
         font_width = self._config['font_width']
@@ -606,6 +605,7 @@ class ePadEntry(Box):
                            size_hint_weight=(0.0, EVAS_HINT_EXPAND),
                            size_hint_align=(0.0, 0.0),
                            line_wrap=ELM_WRAP_NONE)
+
         self.lineList.text_style_user_push("DEFAULT='font_size={0}'".format(self._config['font_size']))
         self.currentLinesShown = 1
         self.lineList.text_set("<i>1<br>")
@@ -613,14 +613,15 @@ class ePadEntry(Box):
         self.lineNums = self._parent.config['line_numbers']
 
         self.mainEn = Entry(self._canvas, scrollable=False,
-                            line_wrap=self._parent.wordwrap, autosave=False,
+                            line_wrap=self._parent.config['word_wrap'],
+                            autosave=False,
                             size_hint_weight=(0.85, EVAS_HINT_EXPAND),
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
         self.mainEn.callback_selection_cut_add(self.takeSnapShot)
         self.mainEn.callback_selection_paste_add(self.takeSnapShot)
-        
+
         self.mainEn.text_style_user_push(self.font_style)
 
         self.totalLines = 0
@@ -1114,19 +1115,20 @@ class ePadToolbar(Toolbar):
         tb_it = self.item_append("preferences-desktop", "Options")
         tb_it.menu = True
         menu = tb_it.menu
-        self._parent.wordwrap = WORD_WRAP
-        '''it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
-        chk = Check(canvas, disabled=True)
+        self._parent.wordwrap = self._parent.config['word_wrap']
+        it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
+        chk = Check(canvas)
         it.content = chk
-        if self._parent.wordwrap == ELM_WRAP_MIXED:
-            it.content.state = True
-        else:
-            it.content.state = False'''
+        it.content.state = (self._parent.config['word_wrap'] == ELM_WRAP_MIXED)
+        self.menu_item_ww = it
 
         it = menu.item_add(None, "Line Numbers", None, self.optionsLineNums)
-        chk = Check(canvas, disabled=True)
+        chk = Check(canvas)
         it.content = chk
         it.content.state = self._parent.config['line_numbers']
+        self.menu_item_ln = it
+
+        self.toggleOptionsHack()
 
         '''it = menu.item_add(None, "New Instance", None, self.optionsNew)
         chk = Check(canvas, disabled=True)
@@ -1140,6 +1142,15 @@ class ePadToolbar(Toolbar):
 
         self.item_append("dialog-information", "About",
                          self.showAbout)
+    def toggleOptionsHack(self):
+        if self._parent.config['word_wrap']:
+            if self._parent.config['line_numbers']:
+                self._parent.config['line_numbers'] = False
+            self.menu_item_ln.content.state = False
+            self.menu_item_ln.disabled_set(True)
+        if self._parent.config['line_numbers']:
+            self.menu_item_ww.content.state = False
+            self.menu_item_ww.disabled_set(True)
 
     def showAbout(self, obj, it):
         AboutWindow(self, title="ePad", standardicon="accessories-text-editor", \
@@ -1147,15 +1158,30 @@ class ePadToolbar(Toolbar):
                         licen=LICENSE, webaddress=__github__, \
                         info=INFO)
 
+    #############################################################
+    # Hack to not allow word wrap at same time as line numbers ##
+    #############################################################
     def optionsWWPress(self, obj, it):
         wordwrap = self._parent.tabbs.currentTab.mainEn.line_wrap
         if wordwrap == ELM_WRAP_MIXED:
             wordwrap = ELM_WRAP_NONE
             it.content.state = False
+            # Hack to not allow word wrap at same time as line numbers ##
+            self.menu_item_ln.disabled_set(False)
         else:
             wordwrap = ELM_WRAP_MIXED
             it.content.state = True
-        self._parent.tabbs.currentTab.mainEn.line_wrap = wordwrap
+        # Change word wrap state of all open tabs
+        for tab in self._parent.tabbs.tabs:
+            tab.mainEn.line_wrap_set(wordwrap)
+            # for some reason have to reset font style
+            while tab.mainEn.text_style_user_peek():
+                tab.mainEn.text_style_user_pop();
+            tab.mainEn.text_style_user_push(self._parent.tabbs.currentTab.font_style)
+
+        self._parent.config['word_wrap'] = wordwrap
+        # Hack to not allow word wrap at same time as line numbers ##
+        self.toggleOptionsHack()
         resetCloseMenuCount(None)
 
     def unDoPress(self, obj, it):
@@ -1197,19 +1223,25 @@ class ePadToolbar(Toolbar):
         resetCloseMenuCount(None)
 
     def optionsLineNums(self, obj, it):
+
         self._parent.tabbs.currentTab.lineNums = not self._parent.tabbs.currentTab.lineNums
         self._parent.config['line_numbers'] = not self._parent.config['line_numbers']
         if self._parent.tabbs.currentTab.lineNums:
+            # Hack to not allow word wrap at same time as line numbers ##
+            self.menu_item_ww.disabled_set(True)
+            self.menu_item_ww.content.state = False
+            self._parent.config['word_wrap'] == ELM_WRAP_NONE
             it.content.state = True
-            for en in self._parent.tabbs.tabs:
-                en.entryBox.pack_before(en.lineList, en.mainEn)
-                en.checkLineNumbers()
-                en.lineList.show()
+            for tab in self._parent.tabbs.tabs:
+                tab.entryBox.pack_before(tab.lineList, tab.mainEn)
+                tab.checkLineNumbers()
+                tab.lineList.show()
         else:
+            self.menu_item_ww.disabled_set(False)
             it.content.state = False
-            for en in self._parent.tabbs.tabs:
-                en.entryBox.unpack(en.lineList)
-                en.lineList.hide()
+            for tab in self._parent.tabbs.tabs:
+                tab.entryBox.unpack(tab.lineList)
+                tab.lineList.hide()
 
 
 class ePadConf(object):
@@ -1226,7 +1258,7 @@ class ePadConf(object):
     __config_version = '{0}.{1}'.format(__config_version_major,
                                         __config_version_minor)
     default = {"version": __config_version,
-               "word_wrap": False,
+               "word_wrap": ELM_WRAP_NONE,
                "font": "Sans",
                "font_size": ePadEntry.default_font_size,
                "font_style": "Normal",
