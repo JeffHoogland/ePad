@@ -132,7 +132,6 @@ ALIGN_LEFT = 0.0, 0.5
 PADDING = 15, 0
 # User options
 SHOW_HIDDEN = False
-NEW_INSTANCE = True
 
 def print_err(*args, **kwargs):
     """
