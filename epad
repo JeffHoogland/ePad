@@ -88,6 +88,7 @@ except ImportError:
     pass
 import re
 
+from efl import ecore
 from efl.evas import EVAS_HINT_EXPAND, EVAS_HINT_FILL, \
     EVAS_CALLBACK_KEY_UP, EVAS_EVENT_FLAG_ON_HOLD
 from efl import elementary
@@ -229,7 +230,6 @@ class Interface(object):
                            size_hint_align=FILL_BOTH)
         self.mainBox.show()
 
-        self.newInstance = NEW_INSTANCE
         self.mainTb = ePadToolbar(self, self.mainWindow)
         self.mainTb.focus_allow = False
         self.mainTb.show()
@@ -322,6 +322,10 @@ class Interface(object):
             self.setFile(btn.data["entry"], btn.text)
 
     def newFile(self, obj=None, ignoreSave=False):
+        if self.config["new_instance"]:
+            print("Launching new instance")
+            ecore.Exe('epad', ecore.ECORE_EXE_PIPE_READ|ecore.ECORE_EXE_PIPE_ERROR|ecore.ECORE_EXE_PIPE_WRITE)
+            return
         self.addFile("Untitled")
 
     def openFile(self, obj=None, ignoreSave=False):
@@ -1265,7 +1269,8 @@ class ePadConf(object):
                "show_pos": True,
                "max_undo": 100,
                "case_sensitive": False,
-               "notify_root": True}
+               "notify_root": True,
+               "new_instance": False}
 
     def __init__(self):
         # sys.platform returns 'linux2' in py2 and linux in py3
