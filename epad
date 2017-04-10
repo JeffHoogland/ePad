@@ -583,8 +583,10 @@ class ePadEntry(Box):
 
         self.size_hint_weight = EXPAND_BOTH
         self.size_hint_align = FILL_BOTH
-
-        font = self._config['font']
+        # py-efl doesn't work correctly with fonts that have spaces in names
+        #   Oddly enough remove spaces and works 
+        #   versions up to 1.18 (inclusive)
+        font = self._config['font'].replace(' ', '') 
         font_style = self._config['font_style']
         font_weight = self._config['font_weight']
         font_width = self._config['font_width']
@@ -618,7 +620,7 @@ class ePadEntry(Box):
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
         self.mainEn.callback_selection_cut_add(self.takeSnapShot)
         self.mainEn.callback_selection_paste_add(self.takeSnapShot)
-        # FIXME: Font in font style doesn't seem changed all other settings seem to work
+        
         self.mainEn.text_style_user_push(self.font_style)
 
         self.totalLines = 0
