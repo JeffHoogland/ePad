@@ -130,7 +130,6 @@ ALIGN_RIGHT = 1.0, 0.5
 ALIGN_LEFT = 0.0, 0.5
 PADDING = 15, 0
 # User options
-NOTIFY_ROOT = True
 SHOW_HIDDEN = False
 NEW_INSTANCE = True
 
@@ -239,18 +238,15 @@ class Interface(object):
 
         # Root User Notification
         if os.geteuid() == 0:
-            #printErr("Caution: Root User")
-            if NOTIFY_ROOT:
+            # print_err("Caution: Root User")
+            if self.config["notify_root"]:
                 notifyBox = Box(self.mainWindow, horizontal=True)
-                notifyBox.show()
-                notify = Notify(self.mainWindow, size_hint_weight=EXPAND_BOTH,
-                                align=(ELM_NOTIFY_ALIGN_FILL, 0.0),
-                                content=notifyBox)
-                notifyLabel = Label(self.mainWindow)
+                notifyLabel = Label(self.mainWindow, size_hint_align=FILL_HORIZ)
                 notifyLabel.text = "<b><i>Root User</i></b>"
                 notifyBox.pack_end(notifyLabel)
                 notifyLabel.show()
                 self.mainBox.pack_end(notifyBox)
+                notifyBox.show()
 
         self.findBox = ePadFindBox(self, self.mainWindow)
         self.findVisible = False
@@ -1268,7 +1264,8 @@ class ePadConf(object):
                "show_hidden": False,
                "show_pos": True,
                "max_undo": 100,
-               "case_sensitive": False}
+               "case_sensitive": False,
+               "notify_root": True}
 
     def __init__(self):
         # sys.platform returns 'linux2' in py2 and linux in py3
