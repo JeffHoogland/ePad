@@ -626,10 +626,14 @@ class ePadEntry(Box):
         self.totalLines = 0
         self.mainEn.show()
         self.mainEn.focus_set(True)
-
+        self.sep = Separator(self._canvas)
+        self.sep.horizontal_set(False)
+        self.sep.show()
+        
         if self.lineNums:
             self.lineList.show()
             self.entryBox.pack_end(self.lineList)
+            self.entryBox.pack_end(self.sep)
         self.entryBox.pack_end(self.mainEn)
 
         self.scr = Scroller(self._canvas,
@@ -1232,7 +1236,9 @@ class ePadToolbar(Toolbar):
             self._parent.config['word_wrap'] == ELM_WRAP_NONE
             it.content.state = True
             for tab in self._parent.tabbs.tabs:
-                tab.entryBox.pack_before(tab.lineList, tab.mainEn)
+                tab.entryBox.pack_before(tab.sep, tab.mainEn)
+                tab.sep.show()
+                tab.entryBox.pack_before(tab.lineList, tab.sep)
                 tab.checkLineNumbers()
                 tab.lineList.show()
         else:
@@ -1240,7 +1246,9 @@ class ePadToolbar(Toolbar):
             it.content.state = False
             for tab in self._parent.tabbs.tabs:
                 tab.entryBox.unpack(tab.lineList)
+                tab.entryBox.unpack(tab.sep)
                 tab.lineList.hide()
+                tab.sep.hide()
 
 
 class ePadConf(object):
