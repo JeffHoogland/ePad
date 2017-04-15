@@ -130,8 +130,7 @@ ALIGN_CENTER = 0.5, 0.5
 ALIGN_RIGHT = 1.0, 0.5
 ALIGN_LEFT = 0.0, 0.5
 PADDING = 15, 0
-# User options
-SHOW_HIDDEN = False
+
 
 def print_err(*args, **kwargs):
     """
@@ -613,7 +612,7 @@ class ePadEntry(Box):
 
         self.mainEn = Entry(self._canvas, scrollable=False,
                             line_wrap=self._parent.config['word_wrap'],
-                            autosave=False,
+                            autosave=self._parent.config['autosave'],
                             size_hint_weight=(0.85, EVAS_HINT_EXPAND),
                             size_hint_align=FILL_BOTH)
         self.mainEn.callback_changed_user_add(self.textEdited)
@@ -1277,7 +1276,9 @@ class ePadConf(object):
                "max_undo": 100,
                "case_sensitive": False,
                "notify_root": True,
-               "new_instance": False}
+               "new_instance": False,
+               "show_hidden": False,
+               "autosave": False}
 
     def __init__(self):
         # sys.platform returns 'linux2' in py2 and linux in py3
