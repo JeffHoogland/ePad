@@ -629,7 +629,7 @@ class ePadEntry(Box):
         self.sep = Separator(self._canvas)
         self.sep.horizontal_set(False)
         self.sep.show()
-        
+
         if self.lineNums:
             self.lineList.show()
             self.entryBox.pack_end(self.lineList)
@@ -1119,19 +1119,18 @@ class ePadToolbar(Toolbar):
         tb_it.menu = True
         menu = tb_it.menu
         self._parent.wordwrap = self._parent.config['word_wrap']
-        it = menu.item_add(None, "Wordwrap", None, self.optionsWWPress)
+        it = menu.item_add(None, "Wordwrap", None, self.optionsToggle)
         chk = Check(canvas)
         it.content = chk
         it.content.state = (self._parent.config['word_wrap'] == ELM_WRAP_MIXED)
         self.menu_item_ww = it
 
-        it = menu.item_add(None, "Line Numbers", None, self.optionsLineNums)
+        it = menu.item_add(None, "Line Numbers", None, self.optionsToggle)
         chk = Check(canvas)
         it.content = chk
         it.content.state = self._parent.config['line_numbers']
         self.menu_item_ln = it
 
-        self.toggleOptionsHack()
 
         '''it = menu.item_add(None, "New Instance", None, self.optionsNew)
         chk = Check(canvas, disabled=True)
@@ -1145,15 +1144,6 @@ class ePadToolbar(Toolbar):
 
         self.item_append("dialog-information", "About",
                          self.showAbout)
-    def toggleOptionsHack(self):
-        if self._parent.config['word_wrap']:
-            if self._parent.config['line_numbers']:
-                self._parent.config['line_numbers'] = False
-            self.menu_item_ln.content.state = False
-            self.menu_item_ln.disabled_set(True)
-        if self._parent.config['line_numbers']:
-            self.menu_item_ww.content.state = False
-            self.menu_item_ww.disabled_set(True)
 
     def showAbout(self, obj, it):
         AboutWindow(self, title="ePad", standardicon="accessories-text-editor", \
@@ -1162,18 +1152,30 @@ class ePadToolbar(Toolbar):
                         info=INFO)
 
     #############################################################
-    # Hack to not allow word wrap at same time as line numbers ##
+    # Hack to toogle word wrap state with line numbers state   ##
     #############################################################
-    def optionsWWPress(self, obj, it):
-        wordwrap = self._parent.tabbs.currentTab.mainEn.line_wrap
-        if wordwrap == ELM_WRAP_MIXED:
-            wordwrap = ELM_WRAP_NONE
-            it.content.state = False
-            # Hack to not allow word wrap at same time as line numbers ##
-            self.menu_item_ln.disabled_set(False)
+    def optionsToggle(self, obj, it):
+        wordwrap = self._parent.config['word_wrap']
+        linenum =  self._parent.config['line_numbers']
+
+        if it.text == "Wordwrap":
+            if wordwrap == ELM_WRAP_MIXED:
+                wordwrap = ELM_WRAP_NONE
+                it.content.state = False
+                linenum = self.menu_item_ln.content.state = True
+            else:
+                wordwrap = ELM_WRAP_MIXED
+                it.content.state = True
+                linenum = self.menu_item_ln.content.state = False
         else:
-            wordwrap = ELM_WRAP_MIXED
-            it.content.state = True
+            if linenum:
+                linenum = it.content.state = False
+                wordwrap = ELM_WRAP_MIXED
+                self.menu_item_ww.content.state = True
+            else:
+                linenum = it.content.state = True
+                wordwrap = ELM_WRAP_NONE
+                self.menu_item_ww.content.state = False
         # Change word wrap state of all open tabs
         for tab in self._parent.tabbs.tabs:
             tab.mainEn.line_wrap_set(wordwrap)
@@ -1181,13 +1183,27 @@ class ePadToolbar(Toolbar):
             while tab.mainEn.text_style_user_peek():
                 tab.mainEn.text_style_user_pop();
             tab.mainEn.text_style_user_push(self._parent.tabbs.currentTab.font_style)
-
+        # Change line number state of all open tabs
+        if linenum:
+            for tab in self._parent.tabbs.tabs:
+                tab.entryBox.pack_before(tab.sep, tab.mainEn)
+                tab.sep.show()
+                tab.entryBox.pack_before(tab.lineList, tab.sep)
+                tab.checkLineNumbers()
+                tab.lineList.show()
+        else:
+            for tab in self._parent.tabbs.tabs:
+                tab.entryBox.unpack(tab.lineList)
+                tab.entryBox.unpack(tab.sep)
+                tab.lineList.hide()
+                tab.sep.hide()
+        # Update Config file
         self._parent.config['word_wrap'] = wordwrap
-        # Hack to not allow word wrap at same time as line numbers ##
-        self.toggleOptionsHack()
+        self._parent.config['line_numbers'] = linenum
         resetCloseMenuCount(None)
-
+        
     def unDoPress(self, obj, it):
+
         self._parent.tabbs.currentTab.unDo()
         resetCloseMenuCount(None)
 
@@ -1224,31 +1240,6 @@ class ePadToolbar(Toolbar):
         else:
             it.content.state = False
         resetCloseMenuCount(None)
-
-    def optionsLineNums(self, obj, it):
-
-        self._parent.tabbs.currentTab.lineNums = not self._parent.tabbs.currentTab.lineNums
-        self._parent.config['line_numbers'] = not self._parent.config['line_numbers']
-        if self._parent.tabbs.currentTab.lineNums:
-            # Hack to not allow word wrap at same time as line numbers ##
-            self.menu_item_ww.disabled_set(True)
-            self.menu_item_ww.content.state = False
-            self._parent.config['word_wrap'] == ELM_WRAP_NONE
-            it.content.state = True
-            for tab in self._parent.tabbs.tabs:
-                tab.entryBox.pack_before(tab.sep, tab.mainEn)
-                tab.sep.show()
-                tab.entryBox.pack_before(tab.lineList, tab.sep)
-                tab.checkLineNumbers()
-                tab.lineList.show()
-        else:
-            self.menu_item_ww.disabled_set(False)
-            it.content.state = False
-            for tab in self._parent.tabbs.tabs:
-                tab.entryBox.unpack(tab.lineList)
-                tab.entryBox.unpack(tab.sep)
-                tab.lineList.hide()
-                tab.sep.hide()
 
 
 class ePadConf(object):
