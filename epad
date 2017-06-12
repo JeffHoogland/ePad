@@ -305,7 +305,8 @@ class Interface(object):
             tabName = filePath.split("/")[-1]
         else:
             tabName = "Untitled"
-
+        entryBox.curChanged(entryBox.mainEn, entryBox.line_label)
+        entryBox.checkLineNumbers()
         self.tabbs.addTab(entryBox, tabName)
 
     def baseFile(self, tabbs):
