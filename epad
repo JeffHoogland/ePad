@@ -112,6 +112,8 @@ from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
 from efl.elementary.table import Table
 from efl.elementary.check import Check
 from efl.elementary.naviframe import Naviframe
+from efl.elementary.configuration import Configuration, \
+        ELM_CONFIG_ICON_THEME_ELEMENTARY 
 
 # Imported here to stop class resolver complaining when an input event
 # applies to an internal layout object
@@ -453,6 +455,7 @@ class Interface(object):
     def unsavedWorkPopup(self):
         if self.confirmPopup:
             return
+        elm_config = Configuration()
         self.confirmPopup = Popup(self.mainWindow,
                                   size_hint_weight=EXPAND_BOTH)
 
@@ -465,23 +468,26 @@ class Interface(object):
         need_ethumb()
         icon = Icon(self.confirmPopup, thumb='True')
         icon.standard_set('dialog-question')
-        # Using gksudo or sudo fails to load Image here
-        #   unless options specify using preserving their existing environment.
-        #   may also fail to load other icons but does not raise an exception
-        #   in that situation.
-        # Works fine using eSudo as a gksudo alternative,
-        #   other alternatives not tested
-        try:
-            dialogImage = Image(self.confirmPopup,
-                                size_hint_weight=EXPAND_HORIZ,
-                                size_hint_align=FILL_BOTH,
-                                file=icon.file_get())
-            tb.pack(dialogImage, 0, 0, 1, 1)
-            dialogImage.show()
-        except RuntimeError:
-            # An error message is displayed for this same error
-            #   when aboutWin is initialized so no need to redisplay.
-            pass
+
+        # Temporary Hack to not displaying icon when using elm icons
+        if elm_config.icon_theme != ELM_CONFIG_ICON_THEME_ELEMENTARY:
+            # Using gksudo or sudo fails to load Image here
+            #   unless options specify using preserving their existing environment.
+            #   may also fail to load other icons but does not raise an exception
+            #   in that situation.
+            # Works fine using eSudo as a gksudo alternative,
+            #   other alternatives not tested
+            try:
+                dialogImage = Image(self.confirmPopup,
+                                    size_hint_weight=EXPAND_HORIZ,
+                                    size_hint_align=FILL_BOTH,
+                                    file=icon.file_get())
+                tb.pack(dialogImage, 0, 0, 1, 1)
+                dialogImage.show()
+            except RuntimeError:
+                # An error message is displayed for this same error
+                #   when aboutWin is initialized so no need to redisplay.
+                pass
         # Add dialog text to table
         dialogLabel = Label(self.confirmPopup, line_wrap=ELM_WRAP_WORD,
                             size_hint_weight=EXPAND_HORIZ,
