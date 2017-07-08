@@ -451,6 +451,8 @@ class Interface(object):
         self.confirmPopup = None
 
     def unsavedWorkPopup(self):
+        if self.confirmPopup:
+            return
         self.confirmPopup = Popup(self.mainWindow,
                                   size_hint_weight=EXPAND_BOTH)
 
