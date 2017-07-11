@@ -110,8 +110,6 @@ from efl.elementary.flip import Flip, ELM_FLIP_ROTATE_XZ_CENTER_AXIS, \
 from efl.elementary.table import Table
 from efl.elementary.check import Check
 from efl.elementary.naviframe import Naviframe
-from efl.elementary.configuration import Configuration, \
-        ELM_CONFIG_ICON_THEME_ELEMENTARY 
 
 # Imported here to stop class resolver complaining when an input event
 # applies to an internal layout object
@@ -148,7 +146,7 @@ def errorPopup(window, errorMsg):
     tb.show()
 
     # Add dialog-error Image to table
-    icon = Icon(errorPopup, thumb='True', resizable=(True, True), 
+    icon = Icon(errorPopup, resizable=(True, True), 
                  size_hint_weight=EXPAND_BOTH, size_hint_align=FILL_BOTH)
     icon.standard_set('dialog-warning')
     tb.pack(icon, 0, 0, 1, 1)
