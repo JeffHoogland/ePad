@@ -115,7 +115,7 @@ from efl.elementary.naviframe import Naviframe
 # applies to an internal layout object
 from efl.elementary.layout import Layout
 
-from elmextensions import AboutWindow
+from elmextensions import AboutWindow, InstanceError
 from elmextensions import FileSelector
 from elmextensions import TabbedBox
 
@@ -1103,10 +1103,13 @@ class ePadToolbar(Toolbar):
                          self.showAbout)
 
     def showAbout(self, obj, it):
-        AboutWindow(self, title="ePad", standardicon="accessories-text-editor", \
+        try:
+            AboutWindow(self, title="ePad", standardicon="accessories-text-editor", \
                         version=__version__, authors=AUTHORS, \
                         licen=LICENSE, webaddress=__github__, \
                         info=INFO)
+        except InstanceError:
+            pass
 
     #############################################################
     # Hack to toogle word wrap state with line numbers state   ##
