@@ -741,7 +741,7 @@ class ePadEntry(Box):
     def openFile(self, filePath):
         try:
             self.mainEn.file_set(filePath, ELM_TEXT_FORMAT_PLAIN_UTF8)
-        except RuntimeError as msg:
+        except (RuntimeWarning, RuntimeError) as msg:
             pass
         self.isNewFile = False
         #Reset undo/redo tracks when we open a file
