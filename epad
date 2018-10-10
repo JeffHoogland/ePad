@@ -619,8 +619,9 @@ class ePadEntry(Box):
         # Add label to show current cursor position
         if self._parent.config['show_pos']:
             self.line_label = Label(self._canvas,
+                                    style="default/right",
                                     size_hint_weight=EXPAND_HORIZ,
-                                    size_hint_align=ALIGN_RIGHT)
+                                    size_hint_align=FILL_BOTH)
 
             self.mainEn.callback_cursor_changed_add(self.curChanged,
                                                     self.line_label)
