@@ -222,8 +222,10 @@ class Interface(object):
         if os.geteuid() == 0:
             # print_err("Caution: Root User")
             if self.config["notify_root"]:
-                notifyBox = Box(self.mainWindow, horizontal=True)
-                notifyLabel = Label(self.mainWindow, size_hint_align=FILL_HORIZ)
+                notifyBox = Box(self.mainWindow, horizontal=True,size_hint_weight=EXPAND_HORIZ,
+                                    size_hint_align=FILL_BOTH)
+                notifyLabel = Label(self.mainWindow, style="default/center", size_hint_weight=EXPAND_HORIZ,
+                                    size_hint_align=FILL_BOTH)
                 notifyLabel.text = "<b><i>Root User</i></b>"
                 notifyBox.pack_end(notifyLabel)
                 notifyLabel.show()
