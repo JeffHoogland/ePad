@@ -439,7 +439,7 @@ class Interface(object):
     def unsavedWorkPopup(self):
         if self.confirmPopup:
             return
-        elm_config = Configuration()
+
         self.confirmPopup = Popup(self.mainWindow,
                                   size_hint_weight=EXPAND_BOTH)
 
