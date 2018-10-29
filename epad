@@ -595,7 +595,8 @@ class ePadEntry(Box):
         self.mainEn.callback_clicked_add(resetCloseMenuCount)
         self.mainEn.callback_selection_cut_add(self.takeSnapShot)
         self.mainEn.callback_selection_paste_add(self.takeSnapShot)
-
+        # Don't let lineList steal focus
+        self.lineList.callback_clicked_add(lambda o: self.mainEn.focus_set(True))
         self.mainEn.text_style_user_push(self.font_style)
 
         self.totalLines = 0
