@@ -294,6 +294,7 @@ class Interface(object):
         entryBox.curChanged(entryBox.mainEn, entryBox.line_label)
         entryBox.checkLineNumbers()
         self.tabbs.addTab(entryBox, tabName)
+        entryBox.mainEn.focus_set(True)
 
     def baseFile(self, tabbs):
         #This function gets called when all files are closed
@@ -599,7 +600,6 @@ class ePadEntry(Box):
 
         self.totalLines = 0
         self.mainEn.show()
-        self.mainEn.focus_set(True)
         self.sep = Separator(self._canvas)
         self.sep.horizontal_set(False)
         self.sep.show()
@@ -751,6 +751,7 @@ class ePadEntry(Box):
         self.doArchive = []
         self.doSpot = 0
         self.takeSnapShot()
+        self.mainEn.focus_set(True)
 
     def closeChecks(self, ourCallback=None):
         if not self.isSaved:
